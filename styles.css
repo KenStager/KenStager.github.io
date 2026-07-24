@@ -500,7 +500,7 @@ a:hover { color: var(--cobalt-deep); }
   .proof-inner { grid-template-columns: 1fr; }
   .site-header { gap: 0.8rem; }
   .site-header nav { order: 3; flex-basis: 100%; gap: 1rem; }
-  .ledger-row { grid-template-columns: 8em 1fr; }
+  .ledger-row { grid-template-columns: minmax(8em, max-content) 1fr; }
   .ledger-row dd.tag { grid-column: 2; }
 }
 
