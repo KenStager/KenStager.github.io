@@ -468,6 +468,17 @@ a:hover { color: var(--cobalt-deep); }
   flex-wrap: wrap;
   margin: 1.8rem 0 1.4rem;
 }
+.contact-fits {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--verify-green);
+  margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
+}
+.contact-lede {
+  font-size: 1.05rem;
+  margin: 0 0 1.5rem;
+}
 .contact-meta {
   font-size: 0.9rem;
   color: var(--muted);
