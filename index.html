@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#FAF9F6">
   <title>Ken Stager — AI Systems Architect | Enterprise AI Platforms</title>
-  <meta name="description" content="Ken Stager is the sole AI Solutions Architect behind Praxo, Digital Realty's Azure enterprise AI platform available to ~4,000 employees — and was contracted directly by Microsoft to bring an internal AI agent from MVP to production.">
+  <meta name="description" content="Sole AI Solutions Architect behind Praxo, Digital Realty's Azure AI platform for ~4,000 employees. Contracted by Microsoft to ship an internal AI agent.">
   <link rel="canonical" href="https://www.kenstager.com/">
 
   <!-- Open Graph / social sharing -->
@@ -27,24 +27,104 @@
 
   <link rel="preload" href="fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/public-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
 
+  <!--
+    Schema graph. Three stable @id nodes: #person, #website, #profilepage.
+    The Person is defined ONCE, here. Future pages (e.g. /writing/<slug>/) must
+    reference it by @id and must NOT redefine it — duplicating the Person blob
+    creates competing entity nodes and undoes the consolidation this is for.
+
+    Article page template (paste on each /writing/ page, adjust the obvious fields):
+      { "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "@id": "https://www.kenstager.com/writing/<slug>/#article",
+        "headline": "...", "datePublished": "YYYY-MM-DD", "dateModified": "YYYY-MM-DD",
+        "author":    { "@id": "https://www.kenstager.com/#person" },
+        "publisher": { "@id": "https://www.kenstager.com/#person" },
+        "isPartOf":  { "@id": "https://www.kenstager.com/#website" },
+        "mainEntityOfPage": "https://www.kenstager.com/writing/<slug>/" }
+
+    RULES:
+    - dateModified below = page-content modification date. NOT the on-page
+      "last.verified" claims-registry date. Different semantics; do not sync.
+    - Every knowsAbout term must be backed by visible copy on this page.
+      No claim without a receipt — including in markup.
+    - No education node, by design. See the Columbia presentation lock
+      (2026-07-28): every schema.org education property asserts a credential
+      or membership the lock forbids, and none carry ranking value. Columbia
+      appears in prose only, where the framing is controlled.
+    - The site's banned positioning words apply to every field here too.
+    - sameAs append list: GitHub (https://github.com/KenStager) ONLY once the
+      profile README + >=1 pinned repo exist. Never add data-broker profiles.
+  -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "ProfilePage",
-    "dateModified": "2026-07-24",
-    "mainEntity": {
-      "@type": "Person",
-      "name": "Ken Stager",
-      "jobTitle": "AI Solutions Architect",
-      "worksFor": { "@type": "Organization", "name": "Digital Realty" },
-      "alumniOf": { "@type": "CollegeOrUniversity", "name": "Columbia University — Fu Foundation School of Engineering and Applied Science" },
-      "address": { "@type": "PostalAddress", "addressLocality": "Greenfield", "addressRegion": "MA", "addressCountry": "US" },
-      "email": "mailto:ken@kenstager.com",
-      "url": "https://www.kenstager.com/",
-      "sameAs": ["https://www.linkedin.com/in/ken-stager/"]
-    }
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://www.kenstager.com/#person",
+        "name": "Ken Stager",
+        "givenName": "Ken",
+        "familyName": "Stager",
+        "jobTitle": "AI Solutions Architect",
+        "description": "Ken Stager is an enterprise AI systems architect and the sole AI Solutions Architect behind Praxo, Digital Realty's Azure-deployed enterprise AI platform, rolled out to roughly 4,000 employees. Microsoft contracted him directly to build the evaluation platform behind an internal AI agent's production rollout.",
+        "url": "https://www.kenstager.com/",
+        "mainEntityOfPage": { "@id": "https://www.kenstager.com/#profilepage" },
+        "email": "ken@kenstager.com",
+        "worksFor": {
+          "@type": "Organization",
+          "@id": "https://www.digitalrealty.com/#organization",
+          "name": "Digital Realty",
+          "url": "https://www.digitalrealty.com/"
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Greenfield",
+          "addressRegion": "MA",
+          "addressCountry": "US"
+        },
+        "knowsAbout": [
+          "Enterprise AI platform architecture",
+          "Retrieval-augmented generation",
+          "GraphRAG",
+          "Hybrid search",
+          "Reciprocal Rank Fusion",
+          "Vector search with pgvector",
+          "LLM evaluation",
+          "AI agent evaluation",
+          "Multi-agent orchestration",
+          "Shadow-mode testing",
+          "Feature-flag rollout",
+          "Azure OpenAI Service",
+          "Semantic Kernel",
+          "AI platform governance"
+        ],
+        "sameAs": [
+          "https://www.linkedin.com/in/ken-stager/"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.kenstager.com/#website",
+        "url": "https://www.kenstager.com/",
+        "name": "Ken Stager",
+        "inLanguage": "en-US",
+        "publisher": { "@id": "https://www.kenstager.com/#person" }
+      },
+      {
+        "@type": "ProfilePage",
+        "@id": "https://www.kenstager.com/#profilepage",
+        "url": "https://www.kenstager.com/",
+        "name": "Ken Stager — AI Systems Architect",
+        "isPartOf": { "@id": "https://www.kenstager.com/#website" },
+        "about": { "@id": "https://www.kenstager.com/#person" },
+        "mainEntity": { "@id": "https://www.kenstager.com/#person" },
+        "dateModified": "2026-07-28"
+      }
+    ]
   }
   </script>
 </head>
@@ -55,6 +135,7 @@
     <a class="wordmark" href="#top">ken.stager</a>
     <nav aria-label="Primary">
       <a href="#platform">Platform</a>
+      <a href="#microsoft">Microsoft</a>
       <a href="#arc">Arc</a>
       <a href="#principles">Principles</a>
       <a href="#contact">Contact</a>
@@ -71,28 +152,28 @@
       <div class="hero-copy">
         <p class="eyebrow">ken stager — ai solutions architect · digital realty</p>
         <h1>I architect enterprise AI systems — and own them end&nbsp;to&nbsp;end.</h1>
-        <p class="hero-sub">I'm the sole AI Solutions Architect behind Praxo, Digital Realty's Azure-deployed enterprise AI platform, available to ~4,000 employees. Before AI, I founded and ran a company for five years — I bring a founder's ownership to systems engineering.</p>
+        <p class="hero-sub">I'm the sole AI Solutions Architect behind Praxo, Digital Realty's Azure-deployed enterprise AI platform, rolled out to ~4,000 employees. Microsoft contracted me directly as an AI Architect to carry an internal AI agent from beta to full production.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="Ken-Stager-Resume.pdf" download>Download resume</a>
           <a class="btn btn-ghost" href="mailto:ken@kenstager.com">Email Ken</a>
         </div>
-        <p class="breadcrumb" aria-label="Career path">creative director&thinsp;→&thinsp;founder&thinsp;→&thinsp;enterprise sales&thinsp;→&thinsp;columbia ai/ml&thinsp;→&thinsp;enterprise ai architect</p>
+        <p class="breadcrumb" aria-label="Career path">creative director<span class="arr">→</span>founder<span class="arr">→</span>enterprise sales<span class="arr">→</span>columbia engineering<span class="arr">→</span>enterprise ai architect</p>
       </div>
 
       <div class="hero-side">
-        <div class="ledger" role="img" aria-label="Verification ledger: platform reach around 4,000 eligible users and around 600 monthly active, deployed. Routing accuracy 88 percent, measured. Test suite over 3,000 automated tests, verified. Release path shadow-mode then feature-flag rollout, deployed. Engagements: Digital Realty and Microsoft, confirmed. Career path founder to architect, confirmed. Last verified July 24, 2026.">
+        <div class="ledger" role="img" aria-label="Verification ledger: engagements Digital Realty and Microsoft, confirmed. Platform rollout around 4,000 employees, deployed. Routing accuracy 88 percent, measured. Test suite over 3,000 automated tests, verified. Release path shadow-mode then feature-flag rollout, deployed. Review scope architecture review boards and department-wide code review, confirmed. Last verified July 28, 2026.">
           <div class="ledger-head">
             <span>verification.ledger</span>
             <span class="ledger-src">source: claims registry</span>
           </div>
           <dl class="ledger-rows">
-            <div class="ledger-row"><dt>platform.reach</dt><dd>~4,000 eligible · ~600 monthly active</dd><dd class="tag">[deployed]</dd></div>
+            <div class="ledger-row"><dt>engagements</dt><dd>digital realty · microsoft</dd><dd class="tag">[confirmed]</dd></div>
+            <div class="ledger-row"><dt>platform.rollout</dt><dd>~4,000 employees</dd><dd class="tag">[deployed]</dd></div>
             <div class="ledger-row"><dt>routing.accuracy</dt><dd>88%</dd><dd class="tag">[measured]</dd></div>
             <div class="ledger-row"><dt>test.suite</dt><dd>3,000+ automated tests</dd><dd class="tag">[verified]</dd></div>
             <div class="ledger-row"><dt>release.path</dt><dd>shadow-mode → feature-flag rollout</dd><dd class="tag">[deployed]</dd></div>
-            <div class="ledger-row"><dt>engagements</dt><dd>digital realty · microsoft</dd><dd class="tag">[confirmed]</dd></div>
-            <div class="ledger-row"><dt>career.path</dt><dd>founder → architect</dd><dd class="tag">[confirmed]</dd></div>
-            <div class="ledger-row"><dt>last.verified</dt><dd>2026-07-24</dd><dd class="tag"></dd></div>
+            <div class="ledger-row"><dt>review.scope</dt><dd>dept-wide code review · boards</dd><dd class="tag">[confirmed]</dd></div>
+            <div class="ledger-row"><dt>last.verified</dt><dd>2026-07-28</dd><dd class="tag"></dd></div>
           </dl>
         </div>
         <p class="ledger-note">receipts, not adjectives — every number on this page traces to a maintained claims registry.</p>
@@ -103,13 +184,13 @@
     <section class="proof" aria-label="Key measured results">
       <div class="proof-inner">
       <div class="stat">
-        <span class="stat-value">~4,000</span>
-        <span class="stat-label">eligible employees · ~600 monthly active</span>
-        <span class="tag">[deployed]</span>
+        <span class="stat-value">beta<span class="arr">→</span>production</span>
+        <span class="stat-label">an internal AI agent, shipped at Microsoft</span>
+        <span class="tag">[delivered]</span>
       </div>
       <div class="stat">
         <span class="stat-value">88%</span>
-        <span class="stat-label">measured routing accuracy across five domains</span>
+        <span class="stat-label">measured routing accuracy across 5 domains</span>
         <span class="tag">[measured]</span>
       </div>
       <div class="stat">
@@ -118,7 +199,7 @@
         <span class="tag">[verified]</span>
       </div>
       <div class="stat">
-        <span class="stat-value">32%&thinsp;→&thinsp;0%</span>
+        <span class="stat-value">32%<span class="arr">→</span>0%</span>
         <span class="stat-label">fallback to the legacy path, after a router fix</span>
         <span class="tag">[measured]</span>
       </div>
@@ -129,7 +210,7 @@
     <section class="section" id="platform">
       <p class="section-eyebrow">[flagship]</p>
       <h2>Praxo — one platform, five systems.</h2>
-      <p class="section-lede">Praxo — formerly Digital Nexus — is Digital Realty's enterprise AI platform: general AI chat, citation-backed document intelligence, and brand-templated presentation generation, deployed on Azure behind enterprise authentication. I'm its sole AI Solutions Architect — I own the platform's architecture, present it at architecture review boards, and review code for most of the department. Here are five of its systems, the decisions behind them, and what we measured.</p>
+      <p class="section-lede">Praxo (formerly Digital Nexus) is Digital Realty's enterprise AI platform: general AI chat, citation-backed document intelligence, and brand-templated presentation generation, deployed on Azure behind enterprise authentication. I own the platform's architecture, I present it at architecture review boards, and I review code for most of the department. Five of its systems are below, with the decisions behind them and what we measured.</p>
 
       <!-- (a) Domain agent orchestration -->
       <article class="case">
@@ -143,17 +224,17 @@
           </div>
           <div class="case-block">
             <p class="case-label">[architecture]</p>
-            <p>An LLM router classifies intent into one of five domains through an explicit state machine — every routing decision lands in an enumerated, testable outcome rather than free-form agent planning. Domain agents retrieve in parallel, results merge through Reciprocal Rank Fusion, and timeouts preserve partial results instead of zeroing out the response.</p>
+            <p>An LLM router classifies intent into one of five domains through an explicit state machine. Every routing decision lands in an enumerated, testable outcome. Domain agents retrieve in parallel, results merge through Reciprocal Rank Fusion, and timeouts preserve partial results instead of zeroing out the response.</p>
             <blockquote class="decision">Chose deterministic routing over free-form agent planning — traded flexibility for auditability and testability.</blockquote>
-            <p>One tradeoff was accepted deliberately: a measured +7% in end-to-end latency bought an 18% reduction in response-generation time — improving the part of the wait users actually feel.</p>
+            <p>One tradeoff was accepted deliberately: a measured +7% in end-to-end latency bought an 18% reduction in response-generation time. That's the part of the wait users actually feel.</p>
           </div>
           <div class="case-block">
-            <p class="case-label">[measured]</p>
+            <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li>88% measured routing accuracy <span class="tag">[measured]</span></li>
-              <li>Fallback to the legacy path reduced from 32% to 0% after a router fix <span class="tag">[measured]</span></li>
-              <li>Parallel router classification saves 500–1,500&nbsp;ms per query <span class="tag">[measured]</span></li>
-              <li>360 automated tests <span class="tag">[verified]</span></li>
+              <li><strong>88%</strong> measured routing accuracy <span class="tag">[measured]</span></li>
+              <li>Fallback to the legacy path reduced from 32% to <strong>0%</strong> after a router fix <span class="tag">[measured]</span></li>
+              <li>Parallel router classification saves <strong>500–1,500&nbsp;ms</strong> per query <span class="tag">[measured]</span></li>
+              <li><strong>360</strong> automated tests <span class="tag">[verified]</span></li>
             </ul>
           </div>
           <p class="case-receipt">Rolled out behind feature flags and validated in shadow mode — the new path ran alongside the legacy path, with per-prompt deltas, before activation. Now live in production as the platform's retrieval backbone.</p>
@@ -168,7 +249,7 @@
         <div class="case-body">
           <div class="case-block">
             <p class="case-label">[problem]</p>
-            <p>RAG pipelines tend to retrieve too much, too loosely — wasting context budget and raising hallucination risk. Enterprise content needs exact matches and fuzzy ones, plus relationships that vector similarity alone can't see.</p>
+            <p>RAG pipelines tend to retrieve too much, too loosely, wasting context budget and raising hallucination risk. Enterprise content needs exact matches and fuzzy ones, plus relationships that vector similarity alone can't see.</p>
           </div>
           <div class="case-block">
             <p class="case-label">[architecture]</p>
@@ -176,13 +257,13 @@
             <blockquote class="decision">Retrieval and reasoning are separate layers — each gets its own controls, ranking, and evaluation.</blockquote>
           </div>
           <div class="case-block">
-            <p class="case-label">[measured]</p>
+            <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li>Graph-guided filtering narrowed 80 candidate sites to 3 relevant matches — a 71% reduction in context size <span class="tag">[measured]</span></li>
-              <li>Geographic resolution maps 68 cities, validated by a 43-case stress bench with 99 assertions <span class="tag">[verified]</span></li>
+              <li>Graph-guided filtering narrowed 80 candidate sites to 3 relevant matches — a <strong>71%</strong> reduction in context size <span class="tag">[measured]</span></li>
+              <li>Geographic resolution maps <strong>68 cities</strong>, validated by a 43-case stress bench with 99 assertions <span class="tag">[verified]</span></li>
             </ul>
           </div>
-          <p class="case-receipt">Responses are citation-backed — provenance is part of the architecture, not a display detail.</p>
+          <p class="case-receipt">Responses are citation-backed. Provenance is part of the architecture, not a display detail.</p>
         </div>
       </article>
 
@@ -202,10 +283,10 @@
             <blockquote class="decision">Testing is architecture — the test suite is the contract that lets the platform change safely.</blockquote>
           </div>
           <div class="case-block">
-            <p class="case-label">[measured]</p>
+            <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li>2,260 automated tests passing (12 skipped) in this integration alone <span class="tag">[verified]</span></li>
-              <li>Part of a 3,000+ test surface across the platform ecosystem <span class="tag">[verified]</span></li>
+              <li><strong>2,260</strong> automated tests passing (12 skipped) in this integration alone <span class="tag">[verified]</span></li>
+              <li>Part of a <strong>3,000+</strong> test surface across the platform ecosystem <span class="tag">[verified]</span></li>
             </ul>
           </div>
           <p class="case-receipt">The validation posture here set the department's pattern — I review code for most of the department.</p>
@@ -220,17 +301,17 @@
         <div class="case-body">
           <div class="case-block">
             <p class="case-label">[problem]</p>
-            <p>The platform needed an evidence-based path for a potential port to a broader internal platform — spanning authentication, storage, retrieval infrastructure, and feature parity — without resting on assumptions.</p>
+            <p>The platform needed an evidence-based path for a potential port to a broader internal platform, spanning authentication, storage, retrieval infrastructure, and feature parity. None of it could rest on assumptions.</p>
           </div>
           <div class="case-block">
             <p class="case-label">[architecture]</p>
-            <p>A five-phase, verification-first assessment: discovery, foundation, core capabilities, feature and UX, operations, synthesis. Every architectural decision — authentication strategy, event-driven text extraction, provider selection — is logged with an audit trail so stakeholders can trace the reasoning, not just the conclusion.</p>
+            <p>A verification-first assessment, run in phases: discovery, foundation, core capabilities, feature and UX, operations, synthesis. Every architectural decision is logged with an audit trail: authentication strategy, event-driven text extraction, provider selection. Stakeholders can follow the reasoning that produced each one.</p>
             <blockquote class="decision">Architecture is a communication job — decisions are logged, presented, and defensible.</blockquote>
           </div>
           <div class="case-block">
             <p class="case-label">[measured]</p>
             <ul class="measured-list">
-              <li>Five logged architecture decisions to date; first two phases complete, third in progress <span class="tag">[documented]</span></li>
+              <li>Architecture decisions logged with an audit trail; phased assessment in progress <span class="tag">[documented]</span></li>
             </ul>
           </div>
           <p class="case-receipt">I lead the program and present findings to architecture review boards and executive stakeholders.</p>
@@ -245,7 +326,7 @@
         <div class="case-body">
           <div class="case-block">
             <p class="case-label">[problem]</p>
-            <p>Every team that wants to build with the organization's AI models needs credentials, quotas, and accountability — and ad-hoc key sharing doesn't survive an enterprise. Developers needed self-service access; the platform needed governance that can't be bypassed.</p>
+            <p>Every team that wants to build with the organization's AI models needs credentials and quotas, and somebody has to be accountable for both. Ad-hoc key sharing doesn't survive an enterprise. Developers needed self-service access; the platform needed governance that can't be bypassed.</p>
           </div>
           <div class="case-block">
             <p class="case-label">[architecture]</p>
@@ -253,9 +334,9 @@
             <blockquote class="decision">One managed credential upstream, zero shared secrets downstream — access is a governed grant, not a copied key.</blockquote>
           </div>
           <div class="case-block">
-            <p class="case-label">[delivered]</p>
+            <p class="case-label is-proof">[delivered]</p>
             <ul class="measured-list">
-              <li>Live in production — request-to-provision flow verified end to end <span class="tag">[deployed]</span></li>
+              <li>Request-to-provision flow verified in production <span class="tag">[deployed]</span></li>
               <li>Least-privilege by construction: provisioning roles can create access but can never read keys <span class="tag">[confirmed]</span></li>
               <li>Per-subscription usage metering and cost showback, priced from a versioned rate book <span class="tag">[deployed]</span></li>
             </ul>
@@ -268,8 +349,8 @@
     <!-- ============ MICROSOFT ENGAGEMENT ============ -->
     <section class="section" id="microsoft">
       <p class="section-eyebrow">[engagement]</p>
-      <h2>Microsoft — from MVP to dropping the flag.</h2>
-      <p class="section-lede">From April to July 2026, Microsoft contracted me directly to help carry an internal AI agent from beta to full production — both rollout flags dropped. The product stays confidential; the work is the story.</p>
+      <h2>Microsoft — from beta to dropping the flag.</h2>
+      <p class="section-lede">From April to July 2026, Microsoft contracted me directly as an AI Architect to help carry an internal AI agent from beta to full production. Both rollout flags dropped. The product stays confidential; the work is the story.</p>
 
       <article class="case">
         <p class="case-scope">microsoft/evals</p>
@@ -278,20 +359,20 @@
         <div class="case-body">
           <div class="case-block">
             <p class="case-label">[problem]</p>
-            <p>An AI agent at MVP is a demo with potential. Shipping it inside Microsoft meant being able to show how it behaved — across the range of things real users would ask — before anyone dropped the flag.</p>
+            <p>An AI agent in beta is a demo with potential. Shipping it inside Microsoft meant showing how it behaved across the range of things real users would ask, before anyone dropped the flag.</p>
           </div>
           <div class="case-block">
             <p class="case-label">[built]</p>
             <p>My largest contribution was the agent's evaluation platform, originated and built end to end: independent quality instruments whose deltas had to agree before a result counted, a harness that exercised the real published agent through the full production path rather than the API, and the statistical discipline — paired tests, false-discovery control, practical-significance thresholds — to tell genuine regressions from noise.</p>
-            <blockquote class="decision">An MVP becomes a product when you can prove how it behaves.</blockquote>
+            <blockquote class="decision">A beta becomes a product when you can prove how it behaves.</blockquote>
             <p>That evidence became the release gate: I authored and published the go/no-go readiness assessment behind the production rollout.</p>
           </div>
           <div class="case-block">
-            <p class="case-label">[delivered]</p>
+            <p class="case-label is-proof">[delivered]</p>
             <ul class="measured-list">
               <li>The agent shipped: beta flag removed, streaming rolled out to production <span class="tag">[delivered]</span></li>
               <li>Go/no-go readiness assessment authored and published — verdict: ready <span class="tag">[delivered]</span></li>
-              <li>Evaluation platform originated and built end to end <span class="tag">[confirmed]</span></li>
+              <li>Evaluation platform originated and built <span class="tag">[confirmed]</span></li>
               <li>Direct engagement, April–July 2026 <span class="tag">[confirmed]</span></li>
             </ul>
           </div>
@@ -318,17 +399,17 @@
         <li class="act">
           <p class="act-label">[act-i] <span class="act-years">2014–2021</span></p>
           <h3>Builder's foundation</h3>
-          <p>First employee at a Philadelphia creative agency, where I built its photography division from scratch. Then I founded Penn360, an architectural photography and marketing consultancy I ran for five years — leading a team, managing finance and clients, and operationalizing 3D modeling and drone services. I learned how systems succeed or fail by owning the outcomes.</p>
+          <p>First employee at a Philadelphia creative agency, where I built its photography division from scratch. Then I founded Penn360, an architectural photography and marketing consultancy I ran for five years: a team of three, the client contracts, the finances, and the 3D modeling and drone services we operationalized. I learned how systems succeed or fail by owning the outcomes.</p>
         </li>
         <li class="act">
           <p class="act-label">[act-ii] <span class="act-years">2022–2024</span></p>
           <h3>The AI transition</h3>
-          <p>Enterprise sales at BlueConic taught me how large organizations actually buy and adopt software — and gave me a working fluency in international data law and ethical data handling. I formalized my AI skills at Columbia Engineering's AI/ML program, then applied them immediately in healthcare consulting, where the measure of success was operational relief, not novelty.</p>
+          <p>Enterprise sales at BlueConic taught me how large organizations actually buy and adopt software — and gave me a working fluency in international data law and ethical data handling. I formalized my AI skills in the Applied Artificial Intelligence Program at Columbia Engineering, Columbia University, then applied them immediately in healthcare consulting, where the measure of success was operational relief, not novelty.</p>
         </li>
         <li class="act">
           <p class="act-label">[act-iii] <span class="act-years">2025–present</span></p>
           <h3>Platform builder</h3>
-          <p>Sole AI Solutions Architect at Digital Realty. I own the platform end to end — frontend, orchestration, document pipelines, retrieval, cloud deployment — and drove its evolution from Digital Nexus into Praxo: multi-agent retrieval live in production, in-chat presentation generation, and an AI API developer portal of my own creation. I present the architecture to review boards and executive stakeholders.</p>
+          <p>Sole AI Solutions Architect at Digital Realty. I own the platform end to end — frontend, orchestration, document pipelines, retrieval, cloud deployment — and drove its evolution from Digital Nexus into Praxo: multi-agent retrieval live in production, in-chat presentation generation, and the AI API Developer Portal, my own creation. I present the architecture to review boards and executive stakeholders.</p>
         </li>
         <li class="act">
           <p class="act-label">[act-iv] <span class="act-years">the discipline</span></p>
@@ -345,11 +426,11 @@
       <dl class="principles-list">
         <div class="principle">
           <dt>LLMs are components, not systems.</dt>
-          <dd>The product is the system around the model: retrieval, routing, validation, rollout. <span class="receipt">receipt: Praxo's three-tier architecture</span></dd>
+          <dd>The model is the easy part. The system around it is retrieval, a router, and a test suite that lets me change any of it without breaking production. <span class="receipt">receipt: Praxo's three-tier architecture</span></dd>
         </div>
         <div class="principle">
           <dt>Retrieval and reasoning are separate layers.</dt>
-          <dd>Each gets its own controls, ranking, and evaluation. <span class="receipt">receipt: RRF fusion + GraphRAG enrichment layer</span></dd>
+          <dd>Each gets its own controls and its own evaluation, and they fail in different ways. <span class="receipt">receipt: RRF fusion + GraphRAG enrichment layer</span></dd>
         </div>
         <div class="principle">
           <dt>No claim without a measurement.</dt>
@@ -361,7 +442,7 @@
         </div>
         <div class="principle">
           <dt>Architecture is a communication job.</dt>
-          <dd>Decisions are logged, presented, and defensible — to engineers and executives alike. <span class="receipt">receipt: architecture review boards; five-phase migration decision log</span></dd>
+          <dd>If a decision isn't written down, it didn't happen. Engineers and executives get the same document. <span class="receipt">receipt: architecture review boards; phased migration decision log</span></dd>
         </div>
       </dl>
     </section>
@@ -405,7 +486,7 @@
         <a class="btn btn-ghost" href="https://www.linkedin.com/in/ken-stager/" rel="me">LinkedIn</a>
         <a class="btn btn-ghost" href="Ken-Stager-Resume.pdf" download>Resume (PDF)</a>
       </div>
-      <p class="contact-meta">Greenfield, Massachusetts · <span class="tag">last.verified 2026-07-24</span></p>
+      <p class="contact-meta">Greenfield, Massachusetts · <span class="tag">last.verified 2026-07-28</span></p>
     </section>
 
   </main>

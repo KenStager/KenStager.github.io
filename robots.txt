@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /Ken-Stager-Resume.pdf
 
 Sitemap: https://www.kenstager.com/sitemap.xml

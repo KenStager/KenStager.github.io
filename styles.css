@@ -65,11 +65,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 img { max-width: 100%; display: block; }
-h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.12; margin: 0 0 0.6em; letter-spacing: -0.01em; }
-h1 { font-size: clamp(2.1rem, 4.6vw, 3.4rem); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.12; margin: 0 0 0.6em; letter-spacing: -0.01em; text-wrap: balance; }
+h1 { font-size: clamp(2.1rem, 4.6vw, 3.4rem); font-variation-settings: 'opsz' 120; }
 h2 { font-size: clamp(1.6rem, 3vw, 2.25rem); }
 h3 { font-size: clamp(1.2rem, 2vw, 1.5rem); }
-p { margin: 0 0 1em; max-width: var(--measure); }
+p { margin: 0 0 1em; max-width: var(--measure); text-wrap: pretty; }
 ul, ol, dl { margin: 0; padding: 0; }
 a { color: var(--cobalt); }
 a:hover { color: var(--cobalt-deep); }
@@ -94,6 +94,16 @@ a:hover { color: var(--cobalt-deep); }
 .skip-link:focus { left: 0; }
 
 /* ---------- Shared mono devices ---------- */
+/* Arrows always render in the mono register: Fraunces and Public Sans have no
+   U+2192 (verified upstream), so falling back is inevitable — this makes the
+   fallback designed instead of accidental, and thin-space glyphs (absent from
+   all three fonts) become deterministic CSS margins. */
+.arr {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 0.9em;
+  margin-inline: 0.14em;
+}
 .tag {
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -303,7 +313,13 @@ a:hover { color: var(--cobalt-deep); }
   font-size: clamp(1.7rem, 2.8vw, 2.3rem);
   font-weight: 600;
   letter-spacing: -0.01em;
+  line-height: 1.15;
+  font-variation-settings: 'opsz' 120;
 }
+/* Align the strip's outer text edges with the page's left/right stems —
+   the cells' own padding caps at 32px while --pad caps at 48px. */
+.stat:first-child { padding-left: var(--pad); }
+.stat:last-child { padding-right: var(--pad); }
 .stat-label {
   font-size: 0.85rem;
   color: var(--muted);
@@ -316,7 +332,11 @@ a:hover { color: var(--cobalt-deep); }
   margin: 0 auto;
   padding: clamp(3rem, 8vh, 5rem) var(--pad) 0;
 }
-.section-lede { font-size: 1.05rem; color: var(--ink); max-width: 68ch; }
+/* Section-to-section air must exceed case-to-case air (4.5rem), or two levels
+   of the hierarchy read as one. also-built keeps its tighter lead-in. */
+.section + .section { padding-top: clamp(4.5rem, 11vh, 7rem); }
+.section + .section.also-built { padding-top: clamp(2.5rem, 6vh, 4rem); }
+.section-lede { font-size: 1.05rem; color: var(--ink); max-width: 68ch; text-wrap: pretty; }
 
 /* ---------- Case studies ---------- */
 .case {
@@ -341,7 +361,11 @@ a:hover { color: var(--cobalt-deep); }
 }
 .case-body { grid-column: 2; grid-row: 1 / span 3; }
 .case-block { margin-bottom: 1.4rem; }
-.case-label { margin: 0 0 0.4rem; color: var(--verify-green); }
+/* Verification-green is a semantic channel: it marks proof, nothing else.
+   Process labels ([problem]/[architecture]/[built]) stay in the muted label
+   register; only [measured]/[delivered] blocks carry .is-proof. */
+.case-label { margin: 0 0 0.4rem; color: var(--muted); }
+.case-label.is-proof { color: var(--verify-green); }
 .decision {
   margin: 1.1rem 0;
   padding: 0.8rem 1.1rem;
@@ -365,7 +389,11 @@ a:hover { color: var(--cobalt-deep); }
   justify-content: space-between;
   gap: 1rem;
   align-items: baseline;
+  font-variant-numeric: tabular-nums;
 }
+/* One emphasized figure per item, semibold not bold — enough for the skim,
+   quiet enough that the gaps stay meaningful. */
+.measured-list strong { font-weight: 600; }
 .measured-list li:last-child { border-bottom: none; }
 .case-receipt {
   font-size: 0.9rem;
@@ -377,7 +405,7 @@ a:hover { color: var(--cobalt-deep); }
 
 /* ---------- Also built ---------- */
 .also-built { padding-top: clamp(2.5rem, 6vh, 4rem); }
-.also-list { list-style: none; max-width: 75ch; }
+.also-list { list-style: none; max-width: 68ch; }
 .also-list li {
   padding: 0.85rem 0;
   border-bottom: 1px dashed var(--line);
@@ -409,12 +437,12 @@ a:hover { color: var(--cobalt-deep); }
 }
 .act:last-child { padding-bottom: 0.5rem; }
 .act-label { margin: 0 0 0.35rem; }
-.act-years { color: var(--verify-green); }
+.act-years { color: var(--muted); }
 .act h3 { margin-bottom: 0.4em; }
 .act p:last-child { margin-bottom: 0; }
 
 /* ---------- Principles ---------- */
-.principles-list { margin-top: 2rem; max-width: 75ch; }
+.principles-list { margin-top: 2rem; max-width: 68ch; }
 .principle {
   padding: 1.1rem 0;
   border-bottom: 1px dashed var(--line);
@@ -461,7 +489,7 @@ a:hover { color: var(--cobalt-deep); }
 
 /* ---------- Contact ---------- */
 .contact { padding-bottom: clamp(3rem, 8vh, 5rem); }
-.contact h2 { max-width: 22ch; }
+.contact h2 { max-width: 26ch; }
 .contact-actions {
   display: flex;
   gap: 0.8rem;
@@ -471,9 +499,10 @@ a:hover { color: var(--cobalt-deep); }
 .contact-fits {
   font-family: var(--font-mono);
   font-size: 0.85rem;
-  color: var(--verify-green);
+  color: var(--ink); /* a real signal, but an aspiration — not a verified claim,
+                        so it stays out of the verification-green channel */
   margin: 0 0 0.75rem;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .contact-lede {
   font-size: 1.05rem;
@@ -515,12 +544,30 @@ a:hover { color: var(--cobalt-deep); }
   .ledger-row dd.tag { grid-column: 2; }
 }
 
-/* ---------- Print: the page is already a document — let it print like one ---------- */
+/* ---------- Print: the page is already a document — let it print like one ----------
+   Goals: identity on page one (header stays, chrome goes), single-column flow
+   (the screen's multi-column layouts re-collapse on paper), real borders where
+   the screen used background-drawn separators, book leading, no stranded
+   headings. Semantics survive grayscale because the [bracket] tags already
+   encode them typographically. */
+@page { margin: 0.75in; }
 @media print {
-  .site-header, .hero-ctas, .contact-actions, .skip-link { display: none; }
-  body { font-size: 10.5pt; }
+  /* The reveal animation must never gate print: without this, armed rows
+     print at opacity 0 and the ledger becomes an empty box on paper. */
+  .ledger.is-armed .ledger-row,
+  .ledger.is-live .ledger-row { opacity: 1 !important; transform: none !important; animation: none !important; }
+  .site-header { position: static; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .site-header nav, .header-actions, .hero-ctas, .contact-actions, .skip-link { display: none; }
+  body { font-size: 10.5pt; line-height: 1.4; }
+  .hero, .case, .cap-grid { grid-template-columns: 1fr; }
+  .case-body { grid-column: 1; grid-row: auto; margin-top: 1.2rem; }
+  .case-stack { max-width: none; }
+  .proof-inner { grid-template-columns: 1fr 1fr; gap: 0; background: none; border: none; }
+  .stat { border: 1px solid #bbb; margin: 0 -1px -1px 0; }
   .ledger { border: 1px solid #999; }
   .case { break-inside: avoid-page; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  p, li { orphans: 3; widows: 3; }
   .contact-meta::after {
     content: ' · ken@kenstager.com';
     font-family: var(--font-mono);

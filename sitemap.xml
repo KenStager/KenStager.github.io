@@ -1,7 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  URL scheme — decided 2026-07-28, do NOT change after publication.
+  GitHub Pages cannot do server-side redirects, so a permalink change later
+  costs meta-refresh shim pages. Lock it now.
+
+    homepage       https://www.kenstager.com/
+    writing index  https://www.kenstager.com/writing/
+    writing entry  https://www.kenstager.com/writing/<topic-slug>/
+                   (directory + index.html — no file extension in the permalink,
+                    survives a move off GitHub Pages; topic-based slug so a
+                    title edit never forces a URL change)
+
+  Append one <url> block per new page. <lastmod> is the DEPLOY DATE of that
+  page's last content change (W3C YYYY-MM-DD). This is NOT the same field as
+  the on-page "last.verified" claims-registry date — different semantics,
+  do not sync them.
+
+  Do NOT list: /Ken-Stager-Resume.pdf, /404.html, google*.html verification files.
+  Do NOT add changefreq or priority — Google ignores both.
+  Do NOT pre-list URLs that don't exist yet — 404s in a sitemap show as errors
+  in the GSC Sitemaps report, which is a signal we're relying on.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.kenstager.com/</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-28</lastmod>
   </url>
 </urlset>
