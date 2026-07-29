@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#FAF9F6">
+  <title>Cloud billing resolves to a resource. Your consumers don't. — Ken Stager</title>
+  <meta name="description" content="Per-consumer LLM cost attribution behind a gateway: where the token identity actually lives, why the price list has to be an immutable table, and four ways I got the cost math wrong.">
+  <link rel="canonical" href="https://www.kenstager.com/writing/per-consumer-llm-cost-attribution/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Cloud billing resolves to a resource. Your consumers don't.">
+  <meta property="og:description" content="Per-consumer LLM cost attribution behind a gateway: where the token identity lives, why the price list has to be immutable, and four ways I got the cost math wrong.">
+  <meta property="og:url" content="https://www.kenstager.com/writing/per-consumer-llm-cost-attribution/">
+  <meta property="og:image" content="https://www.kenstager.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="article:published_time" content="2026-07-29">
+  <meta property="article:author" content="Ken Stager">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cloud billing resolves to a resource. Your consumers don't.">
+  <meta name="twitter:description" content="Per-consumer LLM cost attribution behind a gateway, and four ways I got the cost math wrong.">
+  <meta name="twitter:image" content="https://www.kenstager.com/og-image.png">
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="preload" href="/fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/public-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+
+  <!--
+    Article markup. Follows the template + rules in the homepage <head>.
+    The Person is defined ONCE, on the homepage; referenced here by @id only.
+    No Person node, no keywords/about/image — see the homepage rules block.
+    BreadcrumbList is backed by the visible breadcrumb below.
+  -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "@id": "https://www.kenstager.com/writing/per-consumer-llm-cost-attribution/#article",
+        "headline": "Cloud billing resolves to a resource. Your consumers don't.",
+        "description": "Per-consumer LLM cost attribution behind a gateway: where the token identity actually lives, why the price list has to be an immutable table, and four ways I got the cost math wrong.",
+        "datePublished": "2026-07-29",
+        "dateModified": "2026-07-29",
+        "inLanguage": "en-US",
+        "timeRequired": "PT9M",
+        "author": { "@id": "https://www.kenstager.com/#person" },
+        "publisher": { "@id": "https://www.kenstager.com/#person" },
+        "isPartOf": { "@id": "https://www.kenstager.com/#website" },
+        "mainEntityOfPage": "https://www.kenstager.com/writing/per-consumer-llm-cost-attribution/"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.kenstager.com/writing/per-consumer-llm-cost-attribution/#breadcrumb",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Ken Stager", "item": "https://www.kenstager.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Writing", "item": "https://www.kenstager.com/writing/" },
+          { "@type": "ListItem", "position": 3, "name": "Per-consumer LLM cost attribution" }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="doc">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header is-doc">
+    <a class="wordmark" href="/">ken.stager</a>
+    <nav aria-label="Primary">
+      <a href="/writing/">Writing</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-primary" href="/Ken-Stager-Resume.pdf" download>Download resume</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="post">
+
+      <header class="post-head">
+        <nav class="section-eyebrow post-breadcrumb" aria-label="Breadcrumb">
+          <span><a href="/">ken.stager</a><span class="arr">→</span><a href="/writing/">writing</a><span class="arr">→</span>cost attribution</span>
+        </nav>
+
+        <h1>Cloud billing resolves to a resource. Your consumers don't.</h1>
+
+        <p class="post-meta">2026-07-29 · ~9 min · part 2 of 2</p>
+
+        <p class="section-lede">The dollar figure and the identity live in two systems that never join. Building the join is one equality on a subscription id, and everything around that equality is where the mistakes are.</p>
+      </header>
+
+      <div class="post-body">
+
+        <p>You put a gateway in front of your models, issue every internal team its own key, and now you know exactly who is calling. Then someone in finance asks which team spent what, and you discover the two halves of that sentence live in different universes.</p>
+
+        <p>Cloud billing resolves to a resource. One line for the model resource, inside one subscription, and no dimension anywhere in that data corresponds to a team, a person, or a key. Every call from every consumer aggregates into the same meter.</p>
+
+        <p>Meanwhile the gateway emits token metrics dimensioned by subscription id, which is exactly the identity you want. It just isn't in the billing data and never will be.</p>
+
+        <p>So the join doesn't exist and you have to build it: read token counts out of telemetry keyed by subscription, price them yourself, and store the result per consumer per period. That's the whole mechanism, and it's much less obvious than it sounds.</p>
+
+        <ol class="flow" aria-label="Cost attribution pipeline, five stages">
+          <li>
+            <span class="flow-step">Gateway policy emits a token metric.</span>
+            <span class="flow-note">dimensioned by subscription id, api id, model</span>
+          </li>
+          <li>
+            <span class="flow-step">Application Insights logger, workspace-based.</span>
+          </li>
+          <li>
+            <span class="flow-step">Log Analytics.</span>
+            <span class="flow-note">the AppMetrics table — not the classic customMetrics projection</span>
+          </li>
+          <li>
+            <span class="flow-step">Rollup job sums by subscription, model, and day.</span>
+          </li>
+          <li>
+            <span class="flow-step">Priced usage rows, one per consumer per period.</span>
+            <span class="flow-side">each row references the exact rate row applied to it, from a versioned rate table</span>
+          </li>
+        </ol>
+
+        <ul class="flow-null" aria-label="Cloud billing, which never joins this pipeline">
+          <li>Cloud billing resolves to the resource only — and never joins any of the above.</li>
+        </ul>
+
+        <h2>Where the identity actually lives</h2>
+
+        <p>This is the part I'd have wanted written down, because I lost real time to it.</p>
+
+        <p>The token counts come from an LLM token-metric policy applied at the product scope, emitting a custom metric dimensioned by subscription id, API id, and model. That flows through an Application Insights logger attached to the gateway, into a workspace-based App Insights instance, and lands in Log Analytics.</p>
+
+        <p>It is worth being precise about what it is <em>not</em>:</p>
+
+        <ul>
+          <li><strong>Not the gateway's resource diagnostic logs.</strong> Those describe requests, not token usage.</li>
+          <li><strong>Not the dedicated LLM log table.</strong> That table was empty on our instance, because it requires a Log Analytics diagnostic setting on the gateway resource rather than an App Insights logger, and because the APIs had been imported as generic HTTP rather than as typed LLM APIs.</li>
+        </ul>
+
+        <p>Three reproduction details will save you an afternoon each.</p>
+
+        <p><strong>Workspace-based App Insights changes the schema.</strong> Telemetry lands in the Log Analytics <code>App*</code> tables — <code>AppMetrics</code>, <code>AppRequests</code> — with dimensions inside a <code>Properties</code> JSON column. It does not land in the classic <code>customMetrics</code>/<code>requests</code> projection. Querying the classic schema returns intermittently empty results that look exactly like a dead pipeline. I spent real time convinced the metric emission was broken when the metrics were arriving fine into a table I wasn't reading. Standardize on the Log Analytics schema, and allow a few minutes after traffic before asserting absence — one of our paths has shown ingest latency well past seven minutes.</p>
+
+        <p><strong>Sampling doesn't apply.</strong> The service diagnostic sampling that governs request and trace telemetry does not govern custom metrics emitted through the logger. "Are my metrics sampled?" is the first question anyone building cost attribution should ask, and here the answer is no.</p>
+
+        <p><strong>The query is short.</strong> Sum in long format, pivot in application code rather than in KQL:</p>
+
+        <div class="code-block">
+          <p class="code-label">[kql]</p>
+          <pre><code>AppMetrics
+| where TimeGenerated &gt;= bin(ago(3d), 1d)
+| where Name in ('Prompt Tokens','Prompt Cached Tokens','Completion Tokens',
+                 'Prompt Audio Tokens','Completion Audio Tokens','Completion Reasoning Tokens')
+| extend sid   = tostring(Properties['SubscriptionId']),
+         model = tostring(Properties['Model'])
+| where isnotempty(sid) and sid != 'master'
+| summarize value = sum(Sum), watermark = max(TimeGenerated)
+    by sid, model, Name, bucket = bin(TimeGenerated, 1d)</code></pre>
+        </div>
+
+        <p>That <code>SubscriptionId</code> dimension is the gateway subscription id, which is the same identifier your system of record uses. That single equality is the entire join. It's what lets a dollar figure reach a team.</p>
+
+        <h3>Two things that emit nothing</h3>
+
+        <p>The built-in all-access subscription is excluded explicitly, since its traffic isn't attributable to any consumer.</p>
+
+        <p>More interesting: subscriptions scoped to an individual API, or to all APIs, bypass product-scope policies entirely. They emit no token metric at all. This one is documented, and worth knowing before you discover it:</p>
+
+        <blockquote class="quote-doc">
+          <p>If you're using an API-scoped subscription, an all-APIs subscription, or the built-in all-access subscription, policies configured at the product scope aren't applied to requests from that subscription.</p>
+          <cite class="receipt">Microsoft Learn — <a href="https://learn.microsoft.com/en-us/azure/api-management/api-management-subscriptions">Subscriptions in Azure API Management</a></cite>
+        </blockquote>
+
+        <p>We proved it with a negative test anyway — an API-scoped subscription reached the backend and got a 401, because the product policy that injects the upstream credential never ran. Same root cause, two symptoms: no credential injection and no metering.</p>
+
+        <p>If your metering lives in a product-scope policy, then any subscription issued outside that scope is invisible to it. That's not pedantry. It's a hole in your cost data shaped exactly like whoever asked for a special-case key.</p>
+
+        <h2>Why the price list is a table with a trigger on it</h2>
+
+        <p>The tempting implementation is a config value. Rates in a settings file, multiply, done.</p>
+
+        <p>A config value answers "what does this cost?" A chargeback number has to answer a different question: "what did this cost on the twentieth of June, and can you prove nobody changed the rate since?" A config value is a single mutable cell. Restating history and correcting an error look identical, and there's no artifact showing which rate produced which number.</p>
+
+        <p>So rates live in a versioned, effective-dated table, with at most one open rate per meter, and each stored usage row references the exact rate row applied to it. A database trigger makes the rows immutable: deletes are refused, updates are refused except for closing the open period, and once closed a period can't be reopened or slid. Changing a price means inserting a new row and closing the old one. Rewriting history is a database error rather than a policy someone might forget.</p>
+
+        <blockquote class="decision">That's the difference between a number you can defend in a conversation with finance and a number you can only assert.</blockquote>
+
+        <p>Two smaller decisions in the same spirit. Meters are keyed by the billable model, not by the gateway's routing alias, because an alias is renameable and isn't unique across pricing tiers, so pricing on it means a rename silently re-prices history. And a usage bucket that can't be priced is stored anyway, with real token counts and an explicit unpriced marker, rather than dropped. A skipped meter and a consumer who used nothing look identical in a report. That's the failure mode you least want in a cost system.</p>
+
+        <h2>Showback now, chargeback later, and the column name that keeps you honest</h2>
+
+        <p>Today this is showback. Every consumer's usage is attributed and costed, the numbers are visible in an admin console, and nobody is billed.</p>
+
+        <p>Chargeback is the end goal and the groundwork is deliberate. The rate basis on each row already distinguishes retail from negotiated from provisioned-throughput from a locked internal rate. Cost center is captured at intake, so attribution exists before anyone asks for it. Each usage row points at the rate that produced it. Moving from showback to chargeback means inserting a price row with a different basis, not rebuilding the pipeline.</p>
+
+        <p>The honest limit is in the name of the column. It's called <em>estimated retail</em> on purpose. Tokens multiplied by list price is an allocation basis, not an invoice. Cloud billing charges the resource, and provisioned-throughput, negotiated, and batch pricing all diverge from list. It's the right instrument for apportioning cost across teams and the wrong one for reconciling against a bill. Naming it precisely is the cheapest possible defense against someone three quarters from now reading it as revenue.</p>
+
+        <h2>Four ways I got the cost math wrong</h2>
+
+        <p>This is the part I'd want to read, so it's the part I'll tell honestly.</p>
+
+        <h3>Streamed responses report no usage at all</h3>
+
+        <p>The streaming API omits the usage object entirely unless you explicitly ask for it. Rate limiting still worked, because the throttling policy estimates rather than measures. The provider still billed every token. Only attribution went to zero, which meant a team could stream all month and show nothing.</p>
+
+        <p>A gateway policy that injects the usage flag on streaming requests fixes it, and the fix has to leave non-streaming bodies untouched byte for byte, because a body you re-serialize is a body you might subtly alter on the way to the model.</p>
+
+        <p>I did not find this in production data. It came out of an adversarial review of the design before any of it was built, which is the only reason it was never wrong in the first place. Design review catching your worst bug is a better outcome than production catching it, and a less flattering story, so it's worth saying which one happened.</p>
+
+        <h3>Cached tokens are not the same shape across providers</h3>
+
+        <p>This is the one to internalize, because it is a documented difference between two vendors' public APIs and it will bite anyone brokering both.</p>
+
+        <ul>
+          <li><strong>Azure OpenAI.</strong> <code>prompt_tokens</code> <strong>includes</strong> the cached tokens reported in <code>prompt_tokens_details.cached_tokens</code>. Cached is a subset. Billable input is prompt minus cached.</li>
+          <li><strong>Anthropic Messages API.</strong> <code>input_tokens</code> and the cache-read count are <strong>disjoint</strong>. Billable input is <code>input_tokens</code> as it stands.</li>
+        </ul>
+
+        <p class="code-label">[receipts] <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/prompt-caching">Azure OpenAI prompt caching</a> · <a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching">Anthropic prompt caching</a></p>
+
+        <p>The original formula assumed the first semantic for everything. Applied to Anthropic, subtracting a large cache-read count from a small fresh-input count clamps the fresh input to zero and drops it entirely.</p>
+
+        <p>The error is asymmetric, which is the part worth designing around. Applying the OpenAI rule to Anthropic <em>under-bills</em>. Applying the Anthropic rule to OpenAI <em>double-counts</em>. So unknown models default to the subset semantic: it preserves existing behavior and cannot over-bill a newly onboarded model. Model matching looks for provider markers anywhere in the identifier rather than at the start, so a provider-qualified or registry-pathed model id can't silently fall back to the wrong semantic.</p>
+
+        <p>The live data made it obvious once anyone looked. On a single day, one OpenAI model showed roughly two million prompt tokens against about 1.7 million cached — plausible as a subset. One Anthropic model showed <strong>525 prompt tokens against 8.4 million cache reads</strong>. Cached cannot be a subset of a number sixteen thousand times smaller.</p>
+
+        <p>Two honest qualifications on that second figure. It came from a single agentic consumer whose workload replays a large cached context against very small fresh inputs, so the ratio is a property of that usage pattern rather than a property of Anthropic traffic in general. And the defect was never dependent on the ratio being extreme — the formula was semantically wrong for every Anthropic call regardless. The extreme ratio is only why it became <em>visible</em>.</p>
+
+        <p>That's the actual lesson, and it's a worse one than "we found a bug." On a consumer with modest caching, the same wrong formula produces numbers that look entirely plausible. Detectability depended on someone's traffic shape, not on the severity of the error. So the fix ships a tripwire: the subset branch now logs a warning whenever cached exceeds prompt, because that shape is the signature of a misclassified model and it shouldn't need a pathological consumer to surface.</p>
+
+        <h3>A rolling window that ate the first hours of every day</h3>
+
+        <p>The rollup ran nightly, re-querying and overwriting the trailing few daily buckets. Its lower bound was a relative offset evaluated when the job fired, while results were grouped into calendar days. So the oldest day in range was always partial — it began at the timer's hour rather than at midnight.</p>
+
+        <p>Because each pass overwrites the buckets it touches, the last pass to see a given day rewrote it missing its first few hours, permanently.</p>
+
+        <p>On one measured day, 12.6% of that day's tokens fell inside the clipped window. That window was about 14.6% of wall-clock time, so the loss ran slightly under what a uniform traffic distribution would predict, which is what you'd expect with lighter overnight usage. Treat it as one representative day, not as a constant.</p>
+
+        <p>The structural claim is stronger than the measurement anyway: every settled day was missing its first few hours. The magnitude varies with traffic distribution. The defect does not.</p>
+
+        <p>The fix is one line of intent. Floor the window to the same boundary the grouping uses, so every bucket you query is a whole bucket.</p>
+
+        <h3>And one I haven't fixed</h3>
+
+        <p>At the time of writing this is still open. The stored total-token count excludes cached tokens while the cost includes them, so any panel dividing cost by total tokens reports an inflated per-token rate. It's documented in the code with a pointer to the ticket. It's the least dangerous of the four, because the attribution and the dollar figures are both correct and only a derived ratio is wrong.</p>
+
+        <p>It's still wrong. I shipped fixes for the others and wrote this one down, which is an ordinary engineering tradeoff, and I'd rather describe it than imply a clean sweep.</p>
+
+        <h2>What I'd check first, in your system</h2>
+
+        <ul>
+          <li>Does your metering policy sit at a scope that every issued credential actually passes through? Anything issued outside that scope is invisible, and it will be the special-case key someone asked you for as a favor.</li>
+          <li>Are you reading the schema your telemetry actually writes to? Workspace-based instances moved the tables. An empty result and a broken pipeline look identical.</li>
+          <li>Does anything in your pricing path treat a rate as configuration? If a rate is a mutable cell, you have a number you can state and can't defend.</li>
+          <li>Does your rollup window align to the same boundary as your grouping? If it's a relative offset over calendar buckets, you are losing the edge of every bucket, quietly and permanently.</li>
+        </ul>
+
+      </div>
+
+      <footer>
+        <p class="section-eyebrow">[takeaway]</p>
+        <ul class="takeaway-list">
+          <li>Cloud billing resolves to a resource. Your per-consumer identity lives in gateway telemetry. Nobody joins those for you, and the join is one equality on a subscription id — the hard part is everything around it.</li>
+          <li>Treat the price list as versioned immutable data referenced per usage row, not as configuration. Rewriting history should be a database error.</li>
+          <li>A metering pipeline that brokers more than one provider cannot have one token-accounting model. The gateway abstraction that makes provider differences invisible to consumers is exactly what makes them invisible to your cost math, where they still matter.</li>
+          <li>Prefer the conservative default for unknown models. Under-billing is recoverable. Over-billing a team is a conversation you don't get to take back.</li>
+          <li>Cost bugs are quiet by nature. Every one I found had been producing plausible output for weeks, and one only surfaced because a single consumer's traffic shape made it absurd. Build the tripwire into the fix.</li>
+        </ul>
+
+        <div class="post-next">
+          <p class="code-label">[part 1 of 2]</p>
+          <h2>Your key-provisioning service should not be able to read the keys it issues</h2>
+          <p>The other half of this system: issuing per-consumer credentials from a service that cannot read them, and what that constraint costs in architecture.</p>
+          <a class="btn btn-ghost" href="/writing/key-provisioning-without-read-access/">Read part one</a>
+        </div>
+
+        <p class="case-receipt">Described at capability level; employer and system identity withheld. The same NDA hygiene applies to every engagement written about here.</p>
+      </footer>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <span>ken.stager — ai solutions architect</span>
+    <span>© <span id="year">2026</span> Ken Stager</span>
+  </footer>
+
+  <script src="/script.js"></script>
+  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e5ba6a5b169745c2ac251959fb2ea677"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

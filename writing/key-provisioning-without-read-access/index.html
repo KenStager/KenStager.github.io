@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#FAF9F6">
+  <title>Your key-provisioning service should not be able to read the keys it issues — Ken Stager</title>
+  <meta name="description" content="Removing the read-secrets permission from a key-provisioning service changes a capability rather than adding a control. What that costs: staged envelopes, pinned write ordering, and failure that means two different things.">
+  <link rel="canonical" href="https://www.kenstager.com/writing/key-provisioning-without-read-access/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Your key-provisioning service should not be able to read the keys it issues">
+  <meta property="og:description" content="Removing the read-secrets permission changes a capability rather than adding a control. Here is what it costs: staged envelopes, pinned write ordering, and failure that means two different things.">
+  <meta property="og:url" content="https://www.kenstager.com/writing/key-provisioning-without-read-access/">
+  <meta property="og:image" content="https://www.kenstager.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="article:published_time" content="2026-07-29">
+  <meta property="article:author" content="Ken Stager">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Your key-provisioning service should not be able to read the keys it issues">
+  <meta name="twitter:description" content="Removing the read-secrets permission changes a capability rather than adding a control. Here is what it costs.">
+  <meta name="twitter:image" content="https://www.kenstager.com/og-image.png">
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="preload" href="/fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/public-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+
+  <!--
+    Article markup. Follows the template + rules in the homepage <head>.
+    The Person is defined ONCE, on the homepage; referenced here by @id only.
+    No Person node, no keywords/about/image — see the homepage rules block.
+    BreadcrumbList is backed by the visible breadcrumb below.
+  -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "@id": "https://www.kenstager.com/writing/key-provisioning-without-read-access/#article",
+        "headline": "Your key-provisioning service should not be able to read the keys it issues",
+        "description": "Removing the read-secrets permission from a key-provisioning service changes a capability rather than adding a control. What that costs: staged envelopes, pinned write ordering, and failure that means two different things.",
+        "datePublished": "2026-07-29",
+        "dateModified": "2026-07-29",
+        "inLanguage": "en-US",
+        "timeRequired": "PT10M",
+        "author": { "@id": "https://www.kenstager.com/#person" },
+        "publisher": { "@id": "https://www.kenstager.com/#person" },
+        "isPartOf": { "@id": "https://www.kenstager.com/#website" },
+        "mainEntityOfPage": "https://www.kenstager.com/writing/key-provisioning-without-read-access/"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.kenstager.com/writing/key-provisioning-without-read-access/#breadcrumb",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Ken Stager", "item": "https://www.kenstager.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Writing", "item": "https://www.kenstager.com/writing/" },
+          { "@type": "ListItem", "position": 3, "name": "Key provisioning without read access" }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="doc">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header is-doc">
+    <a class="wordmark" href="/">ken.stager</a>
+    <nav aria-label="Primary">
+      <a href="/writing/">Writing</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-primary" href="/Ken-Stager-Resume.pdf" download>Download resume</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="post">
+
+      <header class="post-head">
+        <nav class="section-eyebrow post-breadcrumb" aria-label="Breadcrumb">
+          <span><a href="/">ken.stager</a><span class="arr">→</span><a href="/writing/">writing</a><span class="arr">→</span>key provisioning</span>
+        </nav>
+
+        <h1>Your key-provisioning service should not be able to read the keys it issues</h1>
+
+        <p class="post-meta">2026-07-29 · ~10 min · part 1 of 2</p>
+
+        <p class="section-lede">Removing the read-secrets permission changes a capability instead of adding a control. It is also the most expensive constraint I have put on a system, and every interesting piece of the architecture exists because of it.</p>
+      </header>
+
+      <div class="post-body">
+
+        <p>Every enterprise that adopts LLMs eventually hits the same problem. Engineering teams want model access. The team holding the provider account has one way to give it to them: hand over a provider key.</p>
+
+        <p>So that happens once, informally, to a team everyone trusts. One key, delivered by hand, to one consumer. That is a defensible answer at N=1 and it is not an answer at N=20. There is no issuance process, so there is nothing to scale. Revocation means rotating a credential several things now depend on. And because every call reaches the model carrying the same key, nothing downstream can tell one caller from another.</p>
+
+        <p>The fix is a gateway. Put Azure API Management in front of the model, issue per-consumer subscription keys, keep the real provider credential server-side. That part is well documented and I won't spend the post on it.</p>
+
+        <p>What I want to write about is what that gateway key turns out to be. <strong>The subscription key is the only thing in the request path that identifies who is calling.</strong> It is what the gateway authenticates, what the rate limit counts against, what approval is granted for, and what usage telemetry is dimensioned by.</p>
+
+        <p>Which means it has to be issued perfectly. That pushed me to a constraint that turned out to be the most expensive decision in the system: the component that provisions keys cannot read them.</p>
+
+        <h2>The usual answer, and why it's a control rather than a capability</h2>
+
+        <p>The default provisioning flow is short. A request comes in, an approver approves, the service calls the platform API to create a subscription, the platform generates the key, the service reads it back and shows it to the consumer.</p>
+
+        <p>That flow needs the provisioning identity to hold a read-secrets permission. Nearly every system holds it, usually with a comment about needing it for recovery, and then protects the stored keys with encryption at rest.</p>
+
+        <p>Encryption at rest is a control, and controls depend on something else staying safe. An attacker who compromises the provisioning identity doesn't have to defeat the encryption. That identity can ask the platform for the key directly. The control isn't broken. It's stepped around.</p>
+
+        <p>Removing the read permission changes the capability instead of adding a control. Compromise of that identity then yields the ability to create and modify subscriptions, which is noisy and fully audited. It does not yield the ability to read any key already issued.</p>
+
+        <p>The platform documents both halves of this, which is worth quoting because it means none of what follows is a trick. On the subscription resource, Microsoft's REST reference says of <code>properties.primaryKey</code>:</p>
+
+        <blockquote class="quote-doc">
+          <p>This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value.</p>
+          <cite class="receipt">Microsoft Learn — <a href="https://learn.microsoft.com/en-us/rest/api/apimanagement/subscription/create-or-update">Subscription - Create Or Update</a></cite>
+        </blockquote>
+
+        <p>So read-back genuinely requires the one permission the role excludes. And the companion concepts page documents that you can set the key yourself at creation, with auto-generation as the fallback when you omit it:</p>
+
+        <blockquote class="quote-doc">
+          <p>Instead of regenerating keys, you can set specific keys by invoking the Azure API Management Subscription - Create Or Update Azure REST API. Specifically, set <code>properties.primaryKey</code> and/or <code>properties.secondaryKey</code> in the HTTP request body.</p>
+          <cite class="receipt">Microsoft Learn — <a href="https://learn.microsoft.com/en-us/azure/api-management/api-management-subscriptions">Subscriptions in Azure API Management</a></cite>
+        </blockquote>
+
+        <p>That's the whole security argument, resting on documented API surface rather than on an internal assertion. It's also easy to claim and expensive to hold, and the rest of this post is the expense.</p>
+
+        <h2>When do you write the key down?</h2>
+
+        <p>If you can't read a key back, you generate it yourself and set it in the same call that creates the subscription. The documented constraint on <code>primaryKey</code> is a maximum length of 256 characters with no charset restriction, so 32 bytes of entropy from a CSPRNG, URL-safe-encoded to about 43 characters, sits comfortably inside it.</p>
+
+        <p>That call goes to a system you don't control, so it has to be retryable. Retryable means it will sometimes run twice. Generate a fresh key inside the retry loop and the second attempt silently resets the live credential of a consumer already using the first one.</p>
+
+        <p>So the key has to exist before the call, and every retry has to reuse it.</p>
+
+        <p>But a key durable before the call is durable for a subscription that may never exist. Failure now has two meanings that need opposite handling:</p>
+
+        <ul>
+          <li><strong>Definitive failure.</strong> A 4xx, a rejection, a request that never landed. The subscription wasn't created, the stored key is garbage, delete it.</li>
+          <li><strong>Ambiguous failure.</strong> A transport error, a 5xx, a timeout. It may have landed. And you cannot check, because checking means reading the key back — the permission you gave up.</li>
+        </ul>
+
+        <p>In the ambiguous case the stored key has to be kept. It might be the live credential on a real subscription, and discarding it strands a working key with no way to deliver it and no way to recover it.</p>
+
+        <h3>The staged envelope</h3>
+
+        <p>That pre-created row is the whole mechanism, and there is nothing exotic about it. Before the platform is ever called, the provisioner writes an encrypted key row into its own database, in its own short transaction, and commits.</p>
+
+        <p>The lookup is a <code>SELECT … FOR UPDATE</code> on the subscription and an issuance source, filtered to rows not yet consumed. If a row exists, decrypt and return it — that's the retry path. If not, mint the key, encrypt it, insert, commit. Only then make the platform call.</p>
+
+        <p>Two properties are doing the work:</p>
+
+        <p><strong>Durability before the side effect.</strong> Without a read-secrets permission, a key that exists only inside an in-flight HTTP request is a key a crash can destroy permanently. Staging first means the key survives any failure of the call that consumes it.</p>
+
+        <p><strong>Its own transaction, not the caller's.</strong> If staging shared the worker's transaction, a rollback would discard the staged row while the platform call may already have landed — reproducing exactly the lost-key scenario it exists to prevent.</p>
+
+        <p>That separation is what makes the retry path possible, and the retry path is the payoff: every attempt finds the same key.</p>
+
+        <h2>The write ordering</h2>
+
+        <ol class="flow" aria-label="Provisioning write ordering, four steps with a three-way branch">
+          <li>
+            <span class="flow-step">Approval commits.</span>
+            <span class="flow-note">the governance decision, durable and independent of the platform</span>
+          </li>
+          <li>
+            <span class="flow-step">Stage the encrypted key.</span>
+            <span class="flow-note">its own committed transaction, before the platform is called</span>
+          </li>
+          <li>
+            <span class="flow-step">Create the subscription, with the key set at creation.</span>
+            <ol class="flow-fork">
+              <li>
+                <span class="flow-cond">[success]</span>
+                <span>Mark the key deliverable, in the same transaction that records the subscription as provisioned.</span>
+              </li>
+              <li>
+                <span class="flow-cond">[4xx · definitive]</span>
+                <span>Delete the staged key. The subscription was never created.</span>
+              </li>
+              <li>
+                <span class="flow-cond">[5xx · ambiguous]</span>
+                <span>Keep the staged key and record the ambiguity. It may be the live credential on a real subscription.</span>
+              </li>
+            </ol>
+            <span class="flow-return">a retry returns to <em>create</em>, never to stage — which is why every attempt carries the same key</span>
+          </li>
+        </ol>
+
+        <p>The order of every transition is load-bearing. I haven't been able to construct an alternative that doesn't either lose a key, silently reuse one it shouldn't, or need the permission I removed.</p>
+
+        <p>The persisted lifecycle is smaller than it looks: three states — staged, available, superseded — plus a consumption timestamp. Consumed is deliberately a timestamp rather than a state value, because the atomic authorize-and-consume needs it as both a predicate and a write in one statement. More on that below.</p>
+
+        <h2>Idempotency: documented, and verified anyway</h2>
+
+        <p>Retry safety depends on repeat creates being upserts rather than duplicates. Subscription identifiers are derived deterministically from the request identifier, so every attempt addresses the same resource.</p>
+
+        <p>The platform documents this directly. The operation is named Create Or Update, and the REST reference for the pinned API version documents <code>201 Created</code> as "the user was successfully subscribed to the product" and <code>200 OK</code> as "the user already subscribed to the product." A repeat create is a documented success, not a conflict.</p>
+
+        <p>I verified it live anyway, and I'd do it again, because in the same week the documentation for a sibling feature had already proven wrong on our pricing tier. A whole configuration family that the docs claimed applied to our tier was refused by the live control plane across three API versions. Having been burned once, spiking the idempotency contract before building four states of retry logic on top of it was proportionate. The spike measured what the docs promised: create returned 201, an identical repeat returned 200 rather than 409, delete succeeded, and a read after delete returned 404 with no residue.</p>
+
+        <p>Verify this against your own platform and tier before you build on it. A repeat create that returns a conflict rather than a success poisons the retry loop on every attempt, and you'd rather learn that in a spike than in production.</p>
+
+        <h2>Delivering it exactly once</h2>
+
+        <p>The same discipline shows up one layer up, when the consumer collects the key.</p>
+
+        <p>A one-time reveal is easy to describe and easy to get subtly wrong. The naive version looks up the record, checks the caller owns it, checks it hasn't been read, marks it read, returns the key. There's a window between the check and the write where two concurrent requests both pass. It also tends to grow helpful error messages, and helpful error messages on an object with a guessable identifier are an enumeration oracle. If "not yours" and "doesn't exist" are distinguishable, an attacker learns which identifiers are real and which keys have already been claimed.</p>
+
+        <p>Collapsing it into one conditional write closes both at once:</p>
+
+        <div class="code-block">
+          <p class="code-label">[sql · illustrative]</p>
+          <pre><code>UPDATE deliveries
+   SET consumed_at = now()
+ WHERE id = :id
+   AND owner = :caller
+   AND state = 'available'
+   AND consumed_at IS NULL
+   AND expires_at &gt; now()
+RETURNING ciphertext, nonce, key_version;</code></pre>
+        </div>
+
+        <p>Zero rows returned produces the same 410 whether the caller is the wrong person, the identifier is fake, the key was already collected, or it expired. There's no read-then-write window to interleave into, because the database serializes the two updates and the second matches nothing. Decryption happens after the row is claimed, so even a failed decrypt burns the read, which is the correct direction to fail.</p>
+
+        <p>This is also why consumed is a timestamp and not a state. The single statement needs <code>consumed_at IS NULL</code> as its predicate and <code>SET consumed_at = now()</code> as its write, so the same column both gates the read and records when it happened.</p>
+
+        <p>The envelope binds its own context. The additional authenticated data covers the delivery, the principal, the subscription, and the key version, so a ciphertext can't be replayed against a different delivery or a different consumer. A mismatch fails the authentication tag instead of producing wrong plaintext. Versioning the encryption key per row lets the key-encryption key rotate without orphaning deliveries already issued.</p>
+
+        <h2>Rotation is the same path with four deliberate differences</h2>
+
+        <p>Rotation reuses the shape exactly: stage the key, set it on the platform, mark it deliverable. The differences are worth writing down, because each one is a decision someone will otherwise make wrong.</p>
+
+        <ol>
+          <li><strong>PATCH, not PUT.</strong> Only the key property is sent. Scope, product association, and state are untouched. A PUT would require restating the whole resource.</li>
+          <li><strong>The staging lookup is partitioned by issuance source.</strong> A rotation's staged key can't be mistaken for a provisioning one on the same subscription, and both can exist concurrently.</li>
+          <li><strong>A rotation always mints a genuinely new key.</strong> Staging reuses an in-flight staged delivery but deliberately refuses to reuse one already marked available. Otherwise "rotate" could hand back the previous unrevealed key, which is the opposite of what the caller asked for.</li>
+          <li><strong>Superseding has no provisioning equivalent.</strong> Once the new key lands, every other unconsumed delivery for that subscription flips to superseded, so only the newest key is ever revealable.</li>
+        </ol>
+
+        <p>There are two entry points, owner self-service and admin-initiated. The admin path stages the key under the <em>consumer's</em> principal, resolved from the backing request, never the admin's. The admin appears only in the audit event. It's also restricted to subscriptions owned by a directory identity, because staging under a gateway-local subject would file the key against the wrong principal and make it unrevealable by its actual owner. The same predicate drives both the API guard and the button's enabled state, so the UI can't offer an action the endpoint will reject.</p>
+
+        <p>One thing I'll flag rather than present as a strength: the key patch sends an unconditional <code>If-Match: *</code>, while another path in the same service explicitly refuses to fall back to a wildcard and retries instead. It's defensible here — the patch changes only the key, and a uniqueness constraint bounds concurrency to one in-flight operation per subscription — but it's an inconsistency, not a designed distinction. I'd rather say that than dress it up as ETag discipline.</p>
+
+        <h2>The gap I didn't see</h2>
+
+        <p>A reconciler compares the gateway's real state against the governance record, because an outbox only knows about work it started. One of its jobs sweeps for subscriptions whose owner has been deleted, suspends them, and marks them orphaned. A separate job cancels anything sitting in a drift state past a grace period.</p>
+
+        <p>Both jobs were correct. Together they had a hole. The sweep suspended the orphan and never stamped the timestamp that starts the grace clock, so the cancel job's window never opened. An orphaned subscription would be suspended and then sit suspended forever.</p>
+
+        <p>Neither job was wrong alone. The bug lived at the seam, in a field one job was supposed to write and the other was supposed to read. It was caught in review rather than in production, which is the only reason I get to call it a gap instead of an incident. I'm now much more suspicious of multi-stage cleanup where the stages run on different schedules and communicate through a column.</p>
+
+        <h2>Where it stops short</h2>
+
+        <p>The ambiguous-failure path records everything and notifies nobody.</p>
+
+        <p>On that path the service writes a durable audit event that names the failure and states explicitly that the staged key was preserved, logs an error with the same framing, and retains the ciphertext for operator recovery. The evidence is queryable and unambiguous. No alert fires. The design document specifies a dead-letter alert on retry exhaustion; it was never built.</p>
+
+        <p>So the code went to real trouble to make the ambiguous case survivable and self-describing, and then stopped short of making it <em>noticed</em>. That's a very ordinary place for a solo build to run out of runway, and it's the thing I'd fix first. A state that means "an operator has to look at this" should be impossible to accumulate silently.</p>
+
+        <h2>What it bought, and what it cost</h2>
+
+        <p>Consumers now get individually issued, individually revocable, individually quota'd credentials through an approval-gated flow, and the service that issues them cannot read any of them back.</p>
+
+        <p>The cost is complexity, concentrated in exactly one place. Had I kept the read-secrets permission, provisioning would be a single function: create the subscription, read the key, store it, show it. No staged envelope, no pinned write ordering, no asymmetric failure handling, no reasoning about what a 5xx might mean.</p>
+
+        <p>I traded real architectural complexity for a security property that only pays out in a scenario I hope never happens. I'd make the same call again, because the alternative is a system whose safety depends on nobody ever compromising the one identity that touches every credential it issues. But it isn't free, and I'd be suspicious of anyone presenting this pattern as though it were.</p>
+
+        <p>One more piece of context that reframes all of it. Microsoft's own documentation says:</p>
+
+        <blockquote class="quote-doc">
+          <p>API Management doesn't provide built-in features to manage the lifecycle of subscription keys, such as setting expiration dates or automatically rotating keys. You can develop workflows to automate these processes by using tools such as Azure PowerShell or the Azure SDKs.</p>
+          <cite class="receipt">Microsoft Learn — <a href="https://learn.microsoft.com/en-us/azure/api-management/api-management-subscriptions">Subscriptions in Azure API Management</a></cite>
+        </blockquote>
+
+        <p>Every piece of machinery in this post — the rotation path, the reveal window, the request expiry, the drift grace period — exists because the platform documents that gap and tells you to fill it yourself. This isn't extra scaffolding around a complete product. It's the part the vendor left for you.</p>
+
+      </div>
+
+      <footer>
+        <p class="section-eyebrow">[takeaway]</p>
+        <ul class="takeaway-list">
+          <li>If a system hands out credentials, the sharpest security property available is that it cannot read the credentials it hands out. Check whether yours holds a read-secrets permission "for recovery." Most do.</li>
+          <li>Then price the change honestly. It forces you to generate credentials locally, set them at creation, and reuse them across retries, and it splits failure into definitive and ambiguous cases you can no longer tell apart by asking.</li>
+          <li>Stage the credential in its own committed transaction before the call that creates the resource. Durability has to precede the side effect, or a crash loses a key you can never read back.</li>
+          <li>Make one-time reads a single conditional write. It closes the concurrency window and the enumeration oracle in one statement.</li>
+          <li>Watch the seams between scheduled jobs that talk to each other through a column. Both halves can be correct and the pair can still be broken.</li>
+        </ul>
+
+        <div class="post-next">
+          <p class="code-label">[part 2 of 2]</p>
+          <h2>Cloud billing resolves to a resource. Your consumers don't.</h2>
+          <p>The other half of this system: why the per-consumer identity you just issued doesn't appear anywhere in your cloud bill, what it takes to build the join, and four ways I got the cost math wrong.</p>
+          <a class="btn btn-ghost" href="/writing/per-consumer-llm-cost-attribution/">Read part two</a>
+        </div>
+
+        <p class="case-receipt">Described at capability level; employer and system identity withheld. The same NDA hygiene applies to every engagement written about here.</p>
+      </footer>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <span>ken.stager — ai solutions architect</span>
+    <span>© <span id="year">2026</span> Ken Stager</span>
+  </footer>
+
+  <script src="/script.js"></script>
+  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e5ba6a5b169745c2ac251959fb2ea677"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

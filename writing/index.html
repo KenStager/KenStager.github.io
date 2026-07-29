@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#FAF9F6">
+  <title>Writing — Ken Stager</title>
+  <meta name="description" content="Write-ups of enterprise AI systems actually built and running, including the parts that were wrong. Governed LLM access, credential isolation, and per-consumer cost attribution.">
+  <link rel="canonical" href="https://www.kenstager.com/writing/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Writing — Ken Stager">
+  <meta property="og:description" content="Write-ups of enterprise AI systems actually built and running, including the parts that were wrong.">
+  <meta property="og:url" content="https://www.kenstager.com/writing/">
+  <meta property="og:image" content="https://www.kenstager.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Writing — Ken Stager">
+  <meta name="twitter:description" content="Write-ups of enterprise AI systems actually built and running, including the parts that were wrong.">
+  <meta name="twitter:image" content="https://www.kenstager.com/og-image.png">
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="preload" href="/fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/public-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+
+  <!--
+    CollectionPage, not Blog/BlogPosting — this is a small curated set, not a
+    feed. hasPart points at the article @ids; the Person is NOT redefined here.
+  -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://www.kenstager.com/writing/#collection",
+        "url": "https://www.kenstager.com/writing/",
+        "name": "Writing — Ken Stager",
+        "description": "Write-ups of enterprise AI systems actually built and running, including the parts that were wrong.",
+        "inLanguage": "en-US",
+        "isPartOf": { "@id": "https://www.kenstager.com/#website" },
+        "author": { "@id": "https://www.kenstager.com/#person" },
+        "hasPart": [
+          { "@id": "https://www.kenstager.com/writing/key-provisioning-without-read-access/#article" },
+          { "@id": "https://www.kenstager.com/writing/per-consumer-llm-cost-attribution/#article" }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.kenstager.com/writing/#breadcrumb",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Ken Stager", "item": "https://www.kenstager.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Writing" }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="doc">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header is-doc">
+    <a class="wordmark" href="/">ken.stager</a>
+    <nav aria-label="Primary">
+      <a href="/writing/" aria-current="page">Writing</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-primary" href="/Ken-Stager-Resume.pdf" download>Download resume</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="post">
+
+      <header class="post-head is-bare">
+        <nav class="section-eyebrow post-breadcrumb" aria-label="Breadcrumb">
+          <span><a href="/">ken.stager</a><span class="arr">→</span>writing</span>
+        </nav>
+
+        <h1>Writing</h1>
+
+        <p class="section-lede">Write-ups of systems I actually built and that are actually running — the architecture, the decisions, and the parts that were wrong. Nothing here is a tutorial for something I haven't shipped. Where a claim rests on vendor behaviour, the vendor's own documentation is quoted and linked, so you can check it in two minutes rather than take my word for it.</p>
+
+        <p>Two pieces so far, written as a pair. They cover the two halves of one governed AI gateway: issuing per-consumer credentials safely, and attributing what those consumers cost.</p>
+      </header>
+
+      <ol class="post-index">
+
+        <li class="entry">
+          <p class="entry-scope">writing/key-provisioning</p>
+          <h2><a href="/writing/key-provisioning-without-read-access/">Your key-provisioning service should not be able to read the keys it issues</a></h2>
+          <p class="entry-meta">2026-07-29 · ~10 min · part 1 of 2</p>
+          <p>Almost every provisioning system holds a read-secrets permission "for recovery," and then protects the keys with encryption at rest. That's a control, and controls get stepped around. Removing the permission changes the capability instead — and forces staged envelopes, a pinned write ordering, and a failure path that means two opposite things depending on the status code.</p>
+        </li>
+
+        <li class="entry">
+          <p class="entry-scope">writing/cost-attribution</p>
+          <h2><a href="/writing/per-consumer-llm-cost-attribution/">Cloud billing resolves to a resource. Your consumers don't.</a></h2>
+          <p class="entry-meta">2026-07-29 · ~9 min · part 2 of 2</p>
+          <p>Your cloud bill has no dimension for a team. Your gateway telemetry has no dollars. Building the join is one equality on a subscription id, and everything around it is where the mistakes are — including four I made in my own cost math, one of which is still open.</p>
+        </li>
+
+      </ol>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>ken.stager — ai solutions architect</span>
+    <span>© <span id="year">2026</span> Ken Stager</span>
+  </footer>
+
+  <script src="/script.js"></script>
+  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e5ba6a5b169745c2ac251959fb2ea677"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

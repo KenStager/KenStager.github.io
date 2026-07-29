@@ -58,6 +58,20 @@
     - The site's banned positioning words apply to every field here too.
     - sameAs append list: GitHub (https://github.com/KenStager) ONLY once the
       profile README + >=1 pinned repo exist. Never add data-broker profiles.
+
+    ARTICLE PAGES (added 2026-07-29, two live under /writing/):
+    - A BreadcrumbList IS permitted alongside the TechArticle, but only when a
+      real breadcrumb is visible on the page. Markup that describes navigation
+      the reader can't see is a claim without a receipt.
+    - Do NOT add "keywords", "about", or "image" to a TechArticle. keywords is
+      an unearned claim in list form; "image" would assert the generic OG card
+      depicts the article. Both fail the receipt rule.
+    - "timeRequired" must match the reading time printed in .post-meta.
+    - The writing index is a CollectionPage, never Blog/BlogPosting — this is a
+      small curated set, not a feed, and BlogPosting would invite a missing-feed
+      expectation the site deliberately doesn't meet.
+    - Keep these rules HERE. A second rules block inside the article files is a
+      second place to forget.
   -->
   <script type="application/ld+json">
   {
@@ -122,7 +136,7 @@
         "isPartOf": { "@id": "https://www.kenstager.com/#website" },
         "about": { "@id": "https://www.kenstager.com/#person" },
         "mainEntity": { "@id": "https://www.kenstager.com/#person" },
-        "dateModified": "2026-07-28"
+        "dateModified": "2026-07-29"
       }
     ]
   }
@@ -136,8 +150,8 @@
     <nav aria-label="Primary">
       <a href="#platform">Platform</a>
       <a href="#microsoft">Microsoft</a>
+      <a href="/writing/">Writing</a>
       <a href="#arc">Arc</a>
-      <a href="#principles">Principles</a>
       <a href="#contact">Contact</a>
     </nav>
     <div class="header-actions">
@@ -342,6 +356,7 @@
             </ul>
           </div>
           <p class="case-receipt">Architecture adversarially reviewed before build — every design draft went through independent cross-model review, and the findings shaped the system.</p>
+          <p class="case-writing">[write-ups] <a href="/writing/key-provisioning-without-read-access/">Issuing keys the issuer can&rsquo;t read</a> &middot; <a href="/writing/per-consumer-llm-cost-attribution/">Per-consumer cost attribution</a></p>
         </div>
       </article>
     </section>
@@ -389,6 +404,18 @@
         <li><strong>Scribe</strong> — a desktop transcription app hardened for production: ~5× embedding throughput through controlled concurrency, rate-limited IPC, typed trust boundaries.</li>
         <li><strong>Healthcare scheduling automation</strong> — for an organization under NDA: AI-driven scheduling and document workflows that reduced backlog without adding staff.</li>
       </ul>
+    </section>
+
+    <!-- ============ WRITING ============ -->
+    <section class="section" id="writing">
+      <p class="section-eyebrow">[writing]</p>
+      <h2>The thinking behind the work.</h2>
+      <p class="section-lede">Write-ups of systems that are actually running, including the parts that were wrong. Where a claim rests on vendor behaviour, the vendor&rsquo;s own documentation is quoted and linked.</p>
+      <ul class="also-list">
+        <li><strong><a href="/writing/key-provisioning-without-read-access/">Your key-provisioning service should not be able to read the keys it issues</a></strong> — removing the read-secrets permission changes a capability rather than adding a control, and forces a staged envelope, a pinned write ordering, and a failure path that means two opposite things.</li>
+        <li><strong><a href="/writing/per-consumer-llm-cost-attribution/">Cloud billing resolves to a resource. Your consumers don&rsquo;t.</a></strong> — your bill has no dimension for a team and your gateway telemetry has no dollars. Building the join, and four ways I got the cost math wrong.</li>
+      </ul>
+      <p class="case-writing"><a href="/writing/">All writing</a><span class="arr">→</span></p>
     </section>
 
     <!-- ============ THE ARC ============ -->

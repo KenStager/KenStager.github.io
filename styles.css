@@ -404,16 +404,276 @@ a:hover { color: var(--cobalt-deep); }
 }
 
 /* ---------- Also built ---------- */
+/* .takeaway-list shares this structure deliberately. It is NOT .measured-list:
+   that one is the proof register (tabular-nums, trailing [tag], .is-proof green),
+   and wrapping advice in it would assert these are verified results — the
+   semantic-color rule violated through layout instead of color. */
 .also-built { padding-top: clamp(2.5rem, 6vh, 4rem); }
-.also-list { list-style: none; max-width: 68ch; }
-.also-list li {
+.also-list,
+.takeaway-list { list-style: none; max-width: 68ch; }
+.also-list li,
+.takeaway-list li {
   padding: 0.85rem 0;
   border-bottom: 1px dashed var(--line);
   font-size: 0.97rem;
   color: var(--muted);
 }
-.also-list li:last-child { border-bottom: none; }
-.also-list strong { color: var(--ink); font-weight: 600; }
+.also-list li:last-child,
+.takeaway-list li:last-child { border-bottom: none; }
+.also-list strong,
+.takeaway-list strong { color: var(--ink); font-weight: 600; }
+/* Takeaways are the payload, not a footnote — full ink, one step up in size. */
+.takeaway-list li { color: var(--ink); font-size: 1rem; }
+
+/* ==========================================================================
+   LONG-FORM ARTICLES  (/writing/<topic-slug>/)
+   Added 2026-07-29. Kept in this file rather than a second stylesheet: the
+   split would make @media print a two-file hand-sync with no linter to catch
+   drift, and a second file is a render-blocking request on the slowest pages.
+   TRIPWIRE: if this block grows past ~40% of the file, split it then.
+
+   Two rules govern everything below:
+   - --verify-green appears in exactly ONE place here, on .quote-doc's citation
+     line (via the existing .receipt), because a verbatim vendor citation IS a
+     receipt. Process labels, flow conditions, and metadata stay muted.
+   - No syntax highlighting. Colour on this site is semantic; highlighting adds
+     five colours that mean nothing inside the one place colour means something.
+   ========================================================================== */
+
+/* ---------- Post scaffolding ---------- */
+/* One token, set on <body class="doc">, re-measures the header, the article and
+   the footer together — they all read var(--max), so they stay aligned. The
+   homepage's 1100px frame is built for a two-column case grid; a single prose
+   column inside it strands ~300px of dead right margin. */
+body.doc { --max: 900px; }
+
+.post {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: clamp(2.5rem, 6vh, 4rem) var(--pad) 0;
+}
+.post-head {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1.7rem;
+  margin-bottom: 2.2rem;
+}
+/* On the index the entries draw their own top rule, so the head's bottom border
+   would double it 25px away. Suppress one; keep the spacing. */
+.post-head.is-bare { border-bottom: none; padding-bottom: 0; margin-bottom: 0.6rem; }
+.post-breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+.post-breadcrumb a { color: var(--muted); text-decoration: none; }
+.post-breadcrumb a:hover { color: var(--cobalt); }
+.post-head h1 {
+  font-size: clamp(1.85rem, 3.7vw, 2.9rem);
+  max-width: 30ch;
+  margin-bottom: 0.5em;
+}
+.post-meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  margin: 0 0 1.3rem;
+}
+
+/* One token override re-measures the whole article: p, .decision and the
+   lists all read var(--measure). Prose runs slightly wider than the homepage's
+   62ch because sustained reading wants a longer line than scannable copy. */
+.post-body { --measure: 66ch; }
+.post-body > *:first-child { margin-top: 0; }
+.post-body h2 { font-size: clamp(1.35rem, 2.4vw, 1.75rem); margin: 2.5rem 0 0.7em; max-width: 30ch; }
+.post-body h3 { font-size: clamp(1.08rem, 1.8vw, 1.28rem); margin: 2rem 0 0.55em; max-width: 34ch; }
+/* h4 is unused today; without this it falls back to browser default the first
+   time a future post nests one level deeper. */
+.post-body h4 {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.4;
+  margin: 1.6rem 0 0.4em;
+}
+.post-body ul,
+.post-body ol { max-width: var(--measure); margin: 0 0 1.2em; padding-left: 1.4rem; }
+.post-body li { margin-bottom: 0.5em; }
+.post-body li::marker { color: var(--muted); }
+.post-body li:last-child { margin-bottom: 0; }
+
+/* ---------- Code ---------- */
+.post-body code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--ledger-bg);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0.08em 0.32em;
+}
+.code-block { margin: 1.5rem 0; max-width: 78ch; }
+.code-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 0.4rem;
+  max-width: none;
+}
+.post-body pre {
+  margin: 0;
+  background: var(--ledger-bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1rem 1.15rem;
+  overflow-x: auto;
+}
+.post-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+
+/* ---------- Vendor documentation quotes ----------
+   Deliberately NOT .decision. Every .decision on this site is one of Ken's own
+   calls, filled and mono; putting a vendor's words in it would silently
+   redefine the component. This inverts both axes: unfilled, body type. */
+.quote-doc {
+  margin: 1.5rem 0;
+  padding-left: 1.2rem;
+  border-left: 2px solid var(--line);
+  max-width: var(--measure);
+}
+.quote-doc p { font-size: 1rem; margin: 0 0 0.5rem; }
+.quote-doc cite { font-style: normal; }
+.quote-doc .receipt { margin-top: 0; }
+
+/* ---------- Flow diagrams ----------
+   Built from tokens rather than rendered: reflows on mobile, survives print,
+   inherits the self-hosted fonts, and is real text for a screen reader.
+   Every arrow must go through .arr — the display and body faces have no U+2192. */
+.flow {
+  list-style: none;
+  margin: 1.7rem 0;
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--line);
+  max-width: 64ch;
+}
+.flow > li { position: relative; padding-bottom: 1.15rem; }
+.flow > li:last-child { padding-bottom: 0; }
+.flow > li::before {
+  content: '';
+  position: absolute;
+  left: calc(-1.5rem - 3px);
+  top: 0.5em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--cobalt);
+}
+.flow-step { display: block; font-size: 0.97rem; }
+.flow-note {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+/* Branch conditions are process outcomes, not proof — muted, never green. */
+.flow-fork { list-style: none; margin: 0.8rem 0 0; padding: 0; max-width: none; }
+.flow-fork > li {
+  display: grid;
+  grid-template-columns: minmax(10em, max-content) 1fr;
+  gap: 0.2rem 1rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-top: 1px dashed var(--line);
+  margin: 0;
+  font-size: 0.94rem;
+}
+.flow-cond { font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); }
+.flow-return {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--line);
+}
+.flow-side {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+/* The detached node. A renderer would draw this as an equal participant in the
+   pipeline, which argues against the post's whole thesis; sitting outside the
+   rail with a hollow marker, the layout makes the argument. */
+.flow-null {
+  list-style: none;
+  max-width: 64ch;
+  margin: -0.4rem 0 1.7rem;
+  padding: 0.75rem 0 0 1.5rem;
+  border-top: 1px dashed var(--line);
+}
+.flow-null li { position: relative; font-size: 0.94rem; color: var(--muted); margin: 0; }
+.flow-null li::before {
+  content: '';
+  position: absolute;
+  left: calc(-1.5rem - 3px);
+  top: 0.5em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  background: var(--paper);
+}
+
+/* ---------- Companion card ---------- */
+.post-next {
+  margin-top: 2.6rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--line);
+}
+.post-next h2 { font-size: 1.15rem; margin: 0 0 0.45rem; max-width: 34ch; }
+.post-next p { font-size: 0.95rem; color: var(--muted); margin: 0 0 1.1rem; }
+
+/* ---------- Writing index ---------- */
+.post-index { list-style: none; margin-top: 2.5rem; }
+.entry { border-top: 1px solid var(--line); padding: 1.9rem 0; }
+.entry:last-child { border-bottom: 1px solid var(--line); }
+.entry-scope {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--cobalt);
+  margin: 0 0 0.35rem;
+}
+.entry h2 { font-size: clamp(1.22rem, 2.2vw, 1.55rem); margin: 0 0 0.5rem; max-width: 32ch; }
+.entry h2 a { color: var(--ink); text-decoration: none; }
+.entry h2 a:hover { color: var(--cobalt); }
+.entry-meta {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+.entry p { font-size: 0.97rem; color: var(--muted); margin: 0; }
+
+/* ---------- Homepage hook into the articles ---------- */
+.case-writing {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0.9rem 0 0;
+}
 
 /* ---------- The Arc ---------- */
 .arc-list {
@@ -542,6 +802,8 @@ a:hover { color: var(--cobalt-deep); }
   .site-header nav { order: 3; flex-basis: 100%; gap: 1rem; }
   .ledger-row { grid-template-columns: minmax(8em, max-content) 1fr; }
   .ledger-row dd.tag { grid-column: 2; }
+  /* The fork's condition column can't hold 10em beside prose at this width. */
+  .flow-fork > li { grid-template-columns: 1fr; gap: 0.15rem; }
 }
 
 /* ---------- Print: the page is already a document — let it print like one ----------
@@ -568,6 +830,16 @@ a:hover { color: var(--cobalt-deep); }
   .case { break-inside: avoid-page; }
   h2, h3 { break-after: avoid; page-break-after: avoid; }
   p, li { orphans: 3; widows: 3; }
+  /* Articles. Without pre-wrap, overflow-x: auto silently CLIPS the right edge
+     of the wider code blocks on paper — same class of bug as the ledger rows
+     printing at opacity 0. */
+  .post-body pre { white-space: pre-wrap; word-break: break-word; }
+  .flow, .flow-null, .code-block, .quote-doc, .post-next { break-inside: avoid-page; }
+  .post-head { break-after: avoid; page-break-after: avoid; }
+  .post-body h4 { break-after: avoid; page-break-after: avoid; }
+  /* Screen-drawn separators become real rules on paper. */
+  .post-body pre, .flow-fork > li { border-color: #bbb; }
+  .quote-doc { border-left-color: #999; }
   .contact-meta::after {
     content: ' · ken@kenstager.com';
     font-family: var(--font-mono);

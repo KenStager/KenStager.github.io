@@ -24,6 +24,18 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.kenstager.com/</loc>
-    <lastmod>2026-07-28</lastmod>
+    <lastmod>2026-07-29</lastmod>
+  </url>
+  <url>
+    <loc>https://www.kenstager.com/writing/</loc>
+    <lastmod>2026-07-29</lastmod>
+  </url>
+  <url>
+    <loc>https://www.kenstager.com/writing/key-provisioning-without-read-access/</loc>
+    <lastmod>2026-07-29</lastmod>
+  </url>
+  <url>
+    <loc>https://www.kenstager.com/writing/per-consumer-llm-cost-attribution/</loc>
+    <lastmod>2026-07-29</lastmod>
   </url>
 </urlset>
