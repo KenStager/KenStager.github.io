@@ -245,11 +245,11 @@
           <div class="case-block">
             <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li class="is-figure"><strong>69%<span class="arr">→</span>95%</strong> routing accuracy, 170-question golden benchmark <span class="tag">[verified in prod]</span></li>
-              <li class="is-figure"><strong>50%<span class="arr">→</span>86%</strong> end-to-end retrieval success; errors and empty results eliminated <span class="tag">[measured]</span></li>
-              <li class="is-figure"><strong>5.3s<span class="arr">→</span>1.4s</strong> retrieval-pipeline latency, median — a 74% cut, same benchmark <span class="tag">[measured]</span></li>
-              <li class="is-figure"><strong>32%<span class="arr">→</span>0%</strong> fallback to the legacy path, after a router fix <span class="tag">[measured]</span></li>
-              <li class="is-figure"><strong>360</strong> automated tests <span class="tag">[verified]</span></li>
+              <li class="is-figure"><strong>69%<span class="arr">→</span>95%</strong><span class="m-label">routing accuracy, 170-question golden benchmark</span><span class="tag">[verified in prod]</span></li>
+              <li class="is-figure"><strong>50%<span class="arr">→</span>86%</strong><span class="m-label">end-to-end retrieval success; errors and empty results eliminated</span><span class="tag">[measured]</span></li>
+              <li class="is-figure"><strong>5.3s<span class="arr">→</span>1.4s</strong><span class="m-label">retrieval-pipeline latency, median — a 74% cut, same benchmark</span><span class="tag">[measured]</span></li>
+              <li class="is-figure"><strong>32%<span class="arr">→</span>0%</strong><span class="m-label">fallback to the legacy path, after a router fix</span><span class="tag">[measured]</span></li>
+              <li class="is-figure"><strong>360</strong><span class="m-label">automated tests</span><span class="tag">[verified]</span></li>
             </ul>
           </div>
           <p class="case-receipt">First validated in shadow mode; the 2026 rebuild found the routing ceiling was architectural, made the fast-paths advisory, shipped dark behind feature flags, and passed an acceptance gate against production data before the flip — verified live the same day. Now the platform's retrieval backbone.</p>
@@ -274,9 +274,9 @@
           <div class="case-block">
             <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li class="is-figure"><strong>71%</strong> less context — graph-guided filtering, 80 candidate sites to 3 <span class="tag">[measured]</span></li>
-              <li class="is-figure"><strong>68</strong> cities mapped by geographic resolution <span class="tag">[verified]</span></li>
-              <li class="is-figure"><strong>99</strong> assertions across a 43-case stress bench <span class="tag">[verified]</span></li>
+              <li class="is-figure"><strong>71%</strong><span class="m-label">less context — graph-guided filtering, 80 candidate sites to 3</span><span class="tag">[measured]</span></li>
+              <li class="is-figure"><strong>68</strong><span class="m-label">cities mapped by geographic resolution</span><span class="tag">[verified]</span></li>
+              <li class="is-figure"><strong>99</strong><span class="m-label">assertions across a 43-case stress bench</span><span class="tag">[verified]</span></li>
             </ul>
           </div>
           <p class="case-receipt">Responses are citation-backed. Provenance is part of the architecture, not a display detail.</p>
@@ -301,8 +301,8 @@
           <div class="case-block">
             <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li class="is-figure"><strong>2,260</strong> automated tests passing (12 skipped) in this integration alone <span class="tag">[verified]</span></li>
-              <li class="is-figure"><strong>3,000+</strong> tests across the platform ecosystem overall <span class="tag">[verified]</span></li>
+              <li class="is-figure"><strong>2,260</strong><span class="m-label">automated tests passing (12 skipped) in this integration alone</span><span class="tag">[verified]</span></li>
+              <li class="is-figure"><strong>3,000+</strong><span class="m-label">tests across the platform ecosystem overall</span><span class="tag">[verified]</span></li>
             </ul>
           </div>
           <p class="case-receipt">The validation posture here set the department's pattern — I review code for most of the department.</p>

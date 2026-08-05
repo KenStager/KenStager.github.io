@@ -405,6 +405,14 @@ a:hover { color: var(--cobalt-deep); }
   grid-template-columns: minmax(5.6em, max-content) 1fr auto;
   gap: 0.75rem;
 }
+/* The label is wrapped in .m-label so a row is exactly three items whatever the
+   label contains. Left as a bare text run it is an anonymous item, and any
+   inline element inside it — an .arr, a .nb — splits it into several: the extra
+   items land in the tag column and shove the remainder onto a second row. That
+   is not hypothetical, it happened while writing these rows.
+   min-width:0 overrides the auto minimum so a long label wraps inside its track
+   instead of forcing the track wider. */
+.measured-list li.is-figure .m-label { min-width: 0; }
 .measured-list li:last-child { border-bottom: none; }
 .case-receipt {
   font-size: 0.9rem;
