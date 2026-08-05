@@ -394,6 +394,17 @@ a:hover { color: var(--cobalt-deep); }
 /* One emphasized figure per item, semibold not bold — enough for the skim,
    quiet enough that the gaps stay meaningful. */
 .measured-list strong { font-weight: 600; }
+/* Rows that open with the figure are a real three-column register: figure,
+   label, tag. Grid rather than the base flex — flex makes every contiguous text
+   run its own item, so space-between lands each row's label at a different x
+   and the column reads as jitter instead of a column.
+   Scoped to .is-figure: prose rows have no leading figure, and a max-content
+   first track would size itself to the whole sentence. */
+.measured-list li.is-figure {
+  display: grid;
+  grid-template-columns: minmax(5.6em, max-content) 1fr auto;
+  gap: 0.75rem;
+}
 .measured-list li:last-child { border-bottom: none; }
 .case-receipt {
   font-size: 0.9rem;
@@ -802,6 +813,13 @@ body.doc { --max: 900px; }
   .site-header nav { order: 3; flex-basis: 100%; gap: 1rem; }
   .ledger-row { grid-template-columns: minmax(8em, max-content) 1fr; }
   .ledger-row dd.tag { grid-column: 2; }
+  /* Same reflow as the ledger above: the tag drops beneath the label rather
+     than holding a third column too narrow to carry it. */
+  .measured-list li.is-figure {
+    grid-template-columns: minmax(5.6em, max-content) 1fr;
+    gap: 0.15rem 0.75rem;
+  }
+  .measured-list li.is-figure .tag { grid-column: 2; }
   /* The fork's condition column can't hold 10em beside prose at this width. */
   .flow-fork > li { grid-template-columns: 1fr; gap: 0.15rem; }
 }

@@ -245,11 +245,11 @@
           <div class="case-block">
             <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li>Routing accuracy raised from 69% to <strong>95%</strong> on a 170-question golden benchmark <span class="tag">[verified in prod]</span></li>
-              <li>End-to-end retrieval success raised from 50% to <strong>86%</strong>; retrieval errors and empty-result queries eliminated <span class="tag">[measured]</span></li>
-              <li>Retrieval-pipeline latency cut <strong>74%</strong> (5.3s → 1.4s median) <span class="tag">[measured]</span></li>
-              <li>Fallback to the legacy path reduced from 32% to <strong>0%</strong> after a router fix <span class="tag">[measured]</span></li>
-              <li><strong>360</strong> automated tests <span class="tag">[verified]</span></li>
+              <li class="is-figure"><strong>69%<span class="arr">→</span>95%</strong> routing accuracy, 170-question golden benchmark <span class="tag">[verified in prod]</span></li>
+              <li class="is-figure"><strong>50%<span class="arr">→</span>86%</strong> end-to-end retrieval success; errors and empty results eliminated <span class="tag">[measured]</span></li>
+              <li class="is-figure"><strong>5.3s<span class="arr">→</span>1.4s</strong> retrieval-pipeline latency, median — a 74% cut, same benchmark <span class="tag">[measured]</span></li>
+              <li class="is-figure"><strong>32%<span class="arr">→</span>0%</strong> fallback to the legacy path, after a router fix <span class="tag">[measured]</span></li>
+              <li class="is-figure"><strong>360</strong> automated tests <span class="tag">[verified]</span></li>
             </ul>
           </div>
           <p class="case-receipt">First validated in shadow mode; the 2026 rebuild found the routing ceiling was architectural, made the fast-paths advisory, shipped dark behind feature flags, and passed an acceptance gate against production data before the flip — verified live the same day. Now the platform's retrieval backbone.</p>
@@ -300,7 +300,7 @@
           <div class="case-block">
             <p class="case-label is-proof">[measured]</p>
             <ul class="measured-list">
-              <li><strong>2,260</strong> automated tests passing (12 skipped) in this integration alone <span class="tag">[verified]</span></li>
+              <li class="is-figure"><strong>2,260</strong> automated tests passing (12 skipped) in this integration alone <span class="tag">[verified]</span></li>
               <li>Part of a <strong>3,000+</strong> test surface across the platform ecosystem <span class="tag">[verified]</span></li>
             </ul>
           </div>
